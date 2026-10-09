@@ -22,6 +22,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        WITH_JDK: ${WITH_JDK:-0}
     container_name: fsp_api
     restart: unless-stopped
     env_file:
@@ -37,6 +39,8 @@ services:
         condition: service_healthy
     volumes:
       - ./:/app:cached
+      # Локальная копия корпуса тестовых заданий (git clone https://github.com/Hexlet/ru-test-assignments data/ru-test-assignments)
+      - ${KNOWLEDGE_HOST_DIR:-./data}:/data:ro
     command: ["/entrypoint.sh"]
 
 volumes:

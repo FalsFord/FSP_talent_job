@@ -14,4 +14,5 @@ pgdata/
 node_modules/
 .idea/
 .vscode/
-*.log
+*.logdata/
+.env

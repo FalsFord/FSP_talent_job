@@ -9,6 +9,8 @@ class MessageOut(BaseModel):
 
 class TokenOut(BaseModel):
     access_token: str
+    verification_required: bool = False
+    dev_verification_token: str | None = None
     token_type: str = "bearer"
 
 
@@ -20,7 +22,7 @@ class RegisterIn(BaseModel):
 
 
 class LoginIn(BaseModel):
-    email: EmailStr
+    email: str = Field(min_length=3, max_length=254)
     password: str
 
 

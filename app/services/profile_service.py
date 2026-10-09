@@ -40,44 +40,44 @@ async def refresh_candidate_search_index(db: AsyncSession, profile: CandidatePro
 
 
 async def link_fsp(db: AsyncSession, profile: CandidateProfile, external_id: str | None) -> FSPParticipantLink:
-    result = await db.execute(select(FSPParticipantLink).where(FSPParticipantLink.candidate_id == profile.id))
+    """Связывает профиль с ID участника ФСП и подтягивает достижения через провайдера (mock или реальный)."""
+    from app.integrations.fsp import get_provider
+
+    result = await db.execute(
+        select(FSPParticipantLink).where(FSPParticipantLink.candidate_id == profile.id)
+        .options(selectinload(FSPParticipantLink.achievements))
+    )
     link = result.scalar_one_or_none()
     if not link:
         link = FSPParticipantLink(candidate_id=profile.id, external_id=external_id)
         db.add(link)
         await db.flush()
-    else:
+        await db.refresh(link, ["achievements"])
+    elif link.external_id != external_id:
         link.external_id = external_id
-    if external_id and settings_mock_achievements(link):
+        for a in list(link.achievements):
+            await db.delete(a)
+        await db.flush()
+        await db.refresh(link, ["achievements"])
+    if external_id and not link.achievements:
+        for a in await get_provider().fetch_achievements(external_id):
+            db.add(FSPAchievement(link_id=link.id, **a))
         await db.flush()
     return link
 
 
-def settings_mock_achievements(link: FSPParticipantLink) -> bool:
-    return True
+async def unlink_fsp(db: AsyncSession, profile: CandidateProfile) -> None:
+    result = await db.execute(select(FSPParticipantLink).where(FSPParticipantLink.candidate_id == profile.id))
+    link = result.scalar_one_or_none()
+    if link:
+        await db.delete(link)
+        await db.flush()
 
 
 async def load_fsp_achievements(db: AsyncSession, profile: CandidateProfile) -> list[FSPAchievement]:
     result = await db.execute(
-        select(FSPParticipantLink)
-        .where(FSPParticipantLink.candidate_id == profile.id)
+        select(FSPParticipantLink).where(FSPParticipantLink.candidate_id == profile.id)
         .options(selectinload(FSPParticipantLink.achievements))
     )
     link = result.scalar_one_or_none()
-    if not link:
-        return []
-    if not link.achievements and link.external_id:
-        from datetime import date
-
-        ach = FSPAchievement(
-            link_id=link.id,
-            title="Участник соревнований ФСП",
-            event_name="Открытый тур ФСП",
-            event_date=date(2025, 3, 1),
-            rank=5,
-            description="Демо-данные для привязанного FSP ID",
-        )
-        db.add(ach)
-        await db.flush()
-        return [ach]
-    return list(link.achievements)
+    return list(link.achievements) if link else []

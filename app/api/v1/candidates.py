@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -9,7 +10,11 @@ from app.models.candidate import CandidateProfile, CandidateSkill, SkillSource, 
 from app.models.reference import Skill
 from app.models.user import User, UserRole
 from app.schemas.candidate import CandidateProfileOut, CandidateProfileUpdate, FSPLinkIn, PrivacyUpdate
-from app.services.profile_service import get_candidate_by_user, link_fsp, load_fsp_achievements, refresh_candidate_search_index
+from app.domain import grade_policy as gp
+from app.services.profile_service import (
+    get_candidate_by_user, link_fsp, load_fsp_achievements, refresh_candidate_search_index, unlink_fsp,
+)
+from app.services.strength_service import recompute_strength
 
 router = APIRouter(prefix="/candidates", tags=["candidates"])
 
@@ -73,9 +78,11 @@ async def update_privacy(
     profile = await get_candidate_by_user(db, user.id)
     if not profile:
         raise HTTPException(status_code=404, detail="Profile not found")
-    profile.privacy = {**(profile.privacy or {}), **body.model_dump()}
+    data = body.model_dump()
+    profile.is_discoverable = data.pop("is_discoverable")       # видимость в банке хранится отдельным полем
+    profile.privacy = {**(profile.privacy or {}), **data}
     await db.commit()
-    return profile.privacy
+    return {**profile.privacy, "is_discoverable": profile.is_discoverable}
 
 
 @router.post("/me/fsp-link")
@@ -89,17 +96,27 @@ async def fsp_link(
         raise HTTPException(status_code=404, detail="Profile not found")
     link = await link_fsp(db, profile, body.external_id)
     achievements = await load_fsp_achievements(db, profile)
-    if achievements:
-        profile.profile_strength = min(100, profile.profile_strength + 10)
+    await recompute_strength(db, profile)            # сила профиля пересчитывается по формуле, а не «+10»
     await refresh_candidate_search_index(db, profile)
     await db.commit()
     return {
         "linked": bool(body.external_id),
         "external_id": link.external_id,
+        "has_history": bool(achievements),          # False — корректный случай: «истории ФСП нет»
         "achievements": [
-            {"title": a.title, "event_name": a.event_name, "rank": a.rank} for a in achievements
+            {"title": a.title, "event_name": a.event_name, "rank": a.rank, "event_date": a.event_date} for a in achievements
         ],
     }
+
+
+@router.delete("/me/fsp-link", status_code=204)
+async def fsp_unlink(user: User = Depends(require_roles(UserRole.candidate)), db: AsyncSession = Depends(get_db)):
+    profile = await get_candidate_by_user(db, user.id)
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+    await unlink_fsp(db, profile)
+    await recompute_strength(db, profile)
+    await db.commit()
 
 
 @router.get("/me/category")
@@ -112,4 +129,8 @@ async def my_category(user: User = Depends(require_roles(UserRole.candidate)), d
         "category": {"id": profile.category.id, "label": profile.category.label, "slug": profile.category.slug},
         "profile_strength": profile.profile_strength,
         "onboarding_completed": profile.onboarding_completed,
+        "confirmed_grade_id": profile.confirmed_grade_id,
+        "verification_status": gp.verification_status(datetime.now(timezone.utc), profile.grade_valid_until),
+        "valid_until": profile.grade_valid_until,
+        "grade_last_changed_at": profile.grade_last_changed_at,
     }

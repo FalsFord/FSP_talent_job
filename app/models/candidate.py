@@ -58,6 +58,14 @@ class CandidateProfile(Base):
     profile_strength: Mapped[float] = mapped_column(Float, default=0.0)
     onboarding_completed: Mapped[bool] = mapped_column(Boolean, default=False)
     privacy: Mapped[dict] = mapped_column(JSONB, default=dict)
+    # --- подтверждение грейда и профиль (добавлено) ---
+    grade_confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    grade_valid_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    is_discoverable: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
+    last_test_ratio: Mapped[float | None] = mapped_column(Float)       # доля баллов последнего зачётного теста (0..1)
+    task_ratio: Mapped[float | None] = mapped_column(Float)            # сглаженная оценка регулярных заданий (0..1)
+    last_micro_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    languages: Mapped[list] = mapped_column(JSONB, default=list)       # языки для тестирования (python/java/sql)
     search_text: Mapped[str | None] = mapped_column(Text)
     embedding = mapped_column(Vector(settings.embedding_dim), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
@@ -80,6 +88,7 @@ class CandidateSkill(Base):
     source: Mapped[SkillSource] = mapped_column(Enum(SkillSource), default=SkillSource.self_declared)
     status: Mapped[SkillStatus] = mapped_column(Enum(SkillStatus), default=SkillStatus.claimed)
     level: Mapped[int] = mapped_column(default=1)
+    verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     candidate: Mapped[CandidateProfile] = relationship(back_populates="skills")
     skill: Mapped["Skill"] = relationship()

@@ -55,6 +55,16 @@ class AssessmentSession(Base):
     outcome_grade_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("grades.id"))
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     submitted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # --- конвейер заданий (добавлено) ---
+    purpose: Mapped[str] = mapped_column(String(16), default="onboarding")   # onboarding|up|down|reattest|micro
+    deadline_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    time_limit_s: Mapped[int | None] = mapped_column(Integer)
+    scaled_score: Mapped[float | None] = mapped_column(Float)
+    confidence: Mapped[float | None] = mapped_column(Float)
+    result: Mapped[str | None] = mapped_column(String(16))                   # pass|borderline|fail
+    integrity: Mapped[list] = mapped_column(JSONB, default=list)             # флаги анти-чита
+    languages: Mapped[list] = mapped_column(JSONB, default=list)
+    decision: Mapped[dict | None] = mapped_column(JSONB)
 
     candidate: Mapped["CandidateProfile"] = relationship()
     answers: Mapped[list["AssessmentAnswer"]] = relationship(back_populates="session", cascade="all, delete-orphan")

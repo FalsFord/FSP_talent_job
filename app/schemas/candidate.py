@@ -1,3 +1,4 @@
+from datetime import datetime
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -49,6 +50,11 @@ class CandidatePublicOut(BaseModel):
     contacts_hidden: bool = True
     phone: str | None = None
     email: str | None = None
+    verification_status: str | None = None
+    grade_valid_until: datetime | None = None
+    verified_skills: list[str] = Field(default_factory=list)
+    fsp_achievements: list[dict] = Field(default_factory=list)   # пусто = истории ФСП нет (корректный случай)
+    fsp_linked: bool = False
 
 
 class FSPLinkIn(BaseModel):
@@ -57,3 +63,5 @@ class FSPLinkIn(BaseModel):
 
 class PrivacyUpdate(BaseModel):
     show_contacts_after_accept: bool = True
+    show_full_name: bool = False        # показывать полное имя до принятия приглашения (по умолчанию «Имя Ф.»)
+    is_discoverable: bool = True        # виден ли профиль работодателям в банке и подборках

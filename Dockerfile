@@ -6,6 +6,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential libpq-dev curl \
     && rm -rf /var/lib/apt/lists/*
 
+# Необязательный JDK: нужен только для проверки Java-кода кандидатов (CODE_EXEC_ENABLED=true).
+# Сборка:  docker compose build --build-arg WITH_JDK=1
+ARG WITH_JDK=0
+RUN if [ "$WITH_JDK" = "1" ]; then apt-get update && apt-get install -y --no-install-recommends openjdk-17-jdk-headless \
+    && rm -rf /var/lib/apt/lists/*; fi
+
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 

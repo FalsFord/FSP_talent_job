@@ -52,6 +52,11 @@ class MatchExplanation(BaseModel):
     skills_missing: list[str]
     profile_strength: float
     fsp_achievements_count: int
+    rank_score: float | None = None
+    match_component: float | None = None
+    verification_status: str | None = None          # confirmed | stale | unconfirmed
+    skills_verified: list[str] = Field(default_factory=list)
+    reasons: list[dict] = Field(default_factory=list)   # [{code, text, weight}] — краткая объяснимость выдачи
 
 
 class MatchedCandidateOut(BaseModel):
@@ -61,3 +66,39 @@ class MatchedCandidateOut(BaseModel):
     match_score: float
     explanation: MatchExplanation
     contacts_hidden: bool = True
+
+
+class ShortlistFilters(BaseModel):
+    city: str | None = None
+    has_fsp: bool | None = None
+    verified_only: bool | None = None
+    skills_all: list[str] | None = None
+    min_strength: float | None = Field(default=None, ge=0, le=100)
+    grade_ids: list[UUID] | None = None
+
+
+class ShortlistIn(BaseModel):
+    filters: ShortlistFilters = Field(default_factory=ShortlistFilters)
+    limit: int = Field(default=50, ge=1, le=100)
+
+
+class CategoryRecommendation(BaseModel):
+    category_id: UUID
+    slug: str
+    label: str
+    candidates_count: int
+    affinity: float
+
+
+class ShortlistOut(BaseModel):
+    snapshot_id: UUID
+    filters: dict
+    categories: list[CategoryRecommendation]
+    candidates: list[MatchedCandidateOut]
+
+
+class TaskPreviewIn(BaseModel):
+    language: str | None = Field(default=None, pattern="^(python|java|sql)$")
+    grade: str | None = Field(default=None, pattern="^(intern|junior|middle|senior|lead)$")
+    seed: int | None = None
+    n_items: int = Field(default=6, ge=3, le=12)

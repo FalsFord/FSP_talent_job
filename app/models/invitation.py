@@ -14,6 +14,8 @@ class InvitationStatus(str, enum.Enum):
     viewed = "viewed"
     accepted = "accepted"
     declined = "declined"
+    withdrawn = "withdrawn"
+    expired = "expired"
 
 
 class Invitation(Base):
@@ -28,6 +30,11 @@ class Invitation(Base):
     salary_min: Mapped[int] = mapped_column(Integer, nullable=False)
     salary_max: Mapped[int] = mapped_column(Integer, nullable=False)
     status: Mapped[InvitationStatus] = mapped_column(Enum(InvitationStatus), default=InvitationStatus.sent)
+    contact_method: Mapped[str | None] = mapped_column(String(256))   # «способ связи» (ТЗ п.2.2)
+    idempotency_key: Mapped[str | None] = mapped_column(String(64))
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    viewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
