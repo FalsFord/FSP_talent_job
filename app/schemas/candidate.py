@@ -35,6 +35,8 @@ class CandidateProfileOut(BaseModel):
     about: str | None
     profile_strength: float
     onboarding_completed: bool
+    is_discoverable: bool = True
+    privacy: dict = Field(default_factory=dict)
     category: CategoryOut | None = None
     phone: str | None = None
 

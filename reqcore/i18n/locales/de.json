@@ -1,0 +1,112 @@
+{
+  "common": {
+    "language": "Sprache",
+    "selectLanguage": "Sprache auswählen",
+    "save": "Speichern",
+    "cancel": "Abbrechen"
+  },
+  "home": {
+    "nav": {
+      "features": "Funktionen",
+      "openPositions": "Offene Stellen",
+      "roadmap": "Roadmap",
+      "blog": "Blog",
+      "github": "GitHub",
+      "dashboard": "Dashboard",
+      "logIn": "Anmelden",
+      "signUp": "Registrieren"
+    },
+    "badge": "Open-Source-ATS für Entwicklerteams",
+    "hero": {
+      "titleLine1": "Ihr Recruiting.",
+      "titleHighlight": "Ihre Infrastruktur.",
+      "subtitle": "Open-Source-Bewerbermanagement für Teams, die selbst hosten.",
+      "goToDashboard": "Zum Dashboard",
+      "signIn": "Anmelden",
+      "createAccount": "Konto erstellen",
+      "ctaDemo": "Live-Demo testen",
+      "ctaStart": "Auf GitHub ansehen",
+      "hint": "Frühe Open-Source-Version — testen Sie die Demo mit Beispieldaten, ohne Registrierung"
+    },
+    "pillars": {
+      "yourData": {
+        "label": "Ihre Daten",
+        "desc": "Postgres + MinIO auf Ihrer Infrastruktur. Nichts verlässt Ihr Netzwerk."
+      },
+      "auditable": {
+        "label": "Vollständig auditierbar",
+        "desc": "Open Source — jede Zeile der Matching-Logik ist sichtbar und anpassbar."
+      },
+      "unlimitedSeats": {
+        "label": "Unbegrenzte Plätze",
+        "desc": "Fügen Sie Ihr gesamtes Recruiting-Team hinzu. Kein Preis pro Platz, nie."
+      }
+    },
+    "footer": {
+      "source": "Quellcode",
+      "tagline": "Reqcore — Open-Source-Bewerbermanagement"
+    }
+  },
+  "retention": {
+    "title": "Datenschutz & Aufbewahrung",
+    "description": "Datenschutzhinweise konfigurieren und Bewerberdaten nach Ablauf der Aufbewahrungsfrist automatisch entfernen.",
+    "policy": {
+      "title": "Aufbewahrungsrichtlinie",
+      "description": "Gemessen ab der letzten Aktivität im Bewerbungsverfahren.",
+      "enable": "Automatische Aufbewahrung aktivieren",
+      "enableHelp": "Abgelaufene Bewerber werden vor der endgültigen Löschung in Quarantäne verschoben. Bestehende Daten erhalten zunächst eine Prüffrist.",
+      "months": "Aufbewahrungsfrist (Monate)",
+      "quarantineDays": "Quarantänefrist (Tage)",
+      "quarantineHelp": "Wiederherstellbare Schonfrist vor der endgültigen Löschung."
+    },
+    "privacy": {
+      "title": "Datenschutzhinweis im Bewerbungsformular",
+      "description": "Wird Bewerbern im öffentlichen Bewerbungsformular angezeigt.",
+      "url": "URL der Datenschutzerklärung",
+      "email": "Datenschutz-Kontaktadresse",
+      "text": "Hinweistext (optional)",
+      "defaultNotice": "Mit Ihrer Bewerbung stimmen Sie zu, dass {organization} Ihre Bewerbungsdaten zur Beurteilung Ihrer Bewerbung verarbeitet. Ihre Daten werden nur so lange wie nötig gespeichert und anschließend gelöscht.",
+      "thisOrganization": "diese Organisation",
+      "policyLink": "Datenschutzerklärung",
+      "contactLabel": "Kontakt"
+    },
+    "save": {
+      "button": "Änderungen speichern",
+      "saving": "Wird gespeichert…",
+      "saved": "Gespeichert!",
+      "permission": "Nur Administratoren und Eigentümer können diese Einstellungen ändern."
+    },
+    "review": {
+      "title": "Bevorstehende Löschungen",
+      "description": "Bewerber, deren Frist abläuft, die in Quarantäne sind oder ausgenommen wurden.",
+      "instanceDisabled": "Die automatische Bereinigung wurde vom Instanzadministrator pausiert. Richtlinien und Prüfdaten bleiben unverändert.",
+      "loading": "Wird geladen…",
+      "empty": "Keine Prüfung erforderlich. Keine Bewerber nähern sich ihrer Aufbewahrungsgrenze.",
+      "expires": "Läuft am {date} ab",
+      "erases": "Löschung am {date}",
+      "exemptUntil": "Ausgenommen bis {date}"
+    },
+    "status": {
+      "expiring": "Läuft bald ab",
+      "expired": "Abgelaufen",
+      "quarantined": "In Quarantäne",
+      "exempt": "Ausgenommen"
+    },
+    "actions": {
+      "export": "Daten exportieren",
+      "restore": "Wiederherstellen",
+      "hold": "Rechtliche Sperre hinzufügen",
+      "clearHold": "Rechtliche Sperre aufheben",
+      "erase": "Jetzt löschen",
+      "holdPrompt": "Grund für die rechtliche Sperre (z. B. ein laufender Rechtsstreit):",
+      "eraseConfirm": "{name} und alle zugehörigen Daten endgültig löschen? Dies kann nicht rückgängig gemacht werden."
+    },
+    "errors": {
+      "save": "Einstellungen konnten nicht gespeichert werden",
+      "restore": "Bewerber konnte nicht wiederhergestellt werden",
+      "hold": "Rechtliche Sperre konnte nicht hinzugefügt werden",
+      "clearHold": "Rechtliche Sperre konnte nicht aufgehoben werden",
+      "erase": "Bewerber konnte nicht gelöscht werden"
+    }
+  }
+}

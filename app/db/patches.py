@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 log = logging.getLogger("db.patches")
 
 COLUMN_PATCHES = [
+    "ALTER TABLE task_assignments ADD COLUMN IF NOT EXISTS eval_details JSONB",
     "ALTER TABLE assessment_sessions ADD COLUMN IF NOT EXISTS purpose VARCHAR(16) DEFAULT 'onboarding'",
     "ALTER TABLE assessment_sessions ADD COLUMN IF NOT EXISTS deadline_at TIMESTAMPTZ",
     "ALTER TABLE assessment_sessions ADD COLUMN IF NOT EXISTS time_limit_s INTEGER",

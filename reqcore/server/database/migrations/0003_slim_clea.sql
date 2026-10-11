@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "application_org_candidate_job_idx" ON "application" USING btree ("organization_id","candidate_id","job_id");

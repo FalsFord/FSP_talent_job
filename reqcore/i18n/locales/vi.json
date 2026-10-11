@@ -1,0 +1,113 @@
+{
+  "common": {
+    "language": "Ngôn ngữ",
+    "selectLanguage": "Chọn ngôn ngữ",
+    "save": "Lưu",
+    "cancel": "Hủy"
+  },
+  "home": {
+    "nav": {
+      "features": "Tính năng",
+      "openPositions": "Vị trí tuyển dụng",
+      "roadmap": "Lộ trình",
+      "blog": "Blog",
+      "github": "GitHub",
+      "dashboard": "Bảng điều khiển",
+      "logIn": "Đăng nhập",
+      "signUp": "Đăng ký"
+    },
+    "badge": "ATS mã nguồn mở cho đội ngũ phát triển",
+    "hero": {
+      "titleLine1": "Tuyển dụng của bạn.",
+      "titleHighlight": "Hạ tầng của bạn.",
+      "subtitle": "Theo dõi ứng viên mã nguồn mở được xây dựng cho các đội tự vận hành.",
+      "goToDashboard": "Đi đến bảng điều khiển",
+      "signIn": "Đăng nhập",
+      "createAccount": "Tạo tài khoản",
+      "ctaDemo": "Thử demo trực tiếp",
+      "ctaStart": "Xem trên GitHub",
+      "hint": "Phiên bản mã nguồn mở sớm — thử demo với dữ liệu mẫu, không cần đăng ký"
+    },
+    "pillars": {
+      "yourData": {
+        "label": "Dữ liệu của bạn",
+        "desc": "Postgres + MinIO trên hạ tầng của bạn. Không có gì rời khỏi mạng của bạn."
+      },
+      "auditable": {
+        "label": "Kiểm toán hoàn toàn",
+        "desc": "Mã nguồn mở — mọi dòng logic matching đều có thể xem và tùy chỉnh."
+      },
+      "unlimitedSeats": {
+        "label": "Không giới hạn người dùng",
+        "desc": "Thêm toàn bộ đội tuyển dụng của bạn. Không tính phí theo người dùng, không bao giờ."
+      }
+    },
+    "footer": {
+      "source": "Mã nguồn",
+      "tagline": "Reqcore — theo dõi ứng viên mã nguồn mở"
+    }
+  },
+  "retention": {
+    "title": "Quyền riêng tư và lưu giữ",
+    "description": "Cấu hình thông báo quyền riêng tư và tự động xóa dữ liệu ứng viên sau thời hạn lưu giữ.",
+    "policy": {
+      "title": "Chính sách lưu giữ",
+      "description": "Được tính từ hoạt động tuyển dụng gần nhất của ứng viên.",
+      "enable": "Bật lưu giữ tự động",
+      "enableHelp": "Ứng viên hết hạn được đưa vào vùng cách ly trước khi xóa vĩnh viễn. Dữ liệu hiện có sẽ có thời gian xem xét trước.",
+      "months": "Thời hạn lưu giữ (tháng)",
+      "quarantineDays": "Thời gian cách ly (ngày)",
+      "quarantineHelp": "Khoảng thời gian có thể khôi phục trước khi xóa vĩnh viễn."
+    },
+    "privacy": {
+      "title": "Thông báo quyền riêng tư trên đơn ứng tuyển",
+      "description": "Hiển thị cho ứng viên trên biểu mẫu ứng tuyển công khai.",
+      "url": "URL chính sách quyền riêng tư",
+      "email": "Email liên hệ về quyền riêng tư",
+      "text": "Nội dung thông báo (không bắt buộc)",
+      "defaultNotice": "Bằng việc ứng tuyển, bạn đồng ý cho {organization} xử lý dữ liệu hồ sơ để đánh giá ứng viên. Dữ liệu chỉ được lưu trong thời gian cần thiết và sau đó sẽ bị xóa.",
+      "thisOrganization": "tổ chức này",
+      "policyLink": "Chính sách quyền riêng tư",
+      "contactLabel": "Liên hệ"
+    },
+    "save": {
+      "button": "Lưu thay đổi",
+      "saving": "Đang lưu…",
+      "saved": "Đã lưu!",
+      "permission": "Chỉ quản trị viên và chủ sở hữu mới có thể thay đổi các cài đặt này."
+    },
+    "review": {
+      "title": "Các lượt xóa sắp tới",
+      "description": "Ứng viên sắp hết hạn, đang cách ly hoặc được miễn lưu giữ.",
+      "instanceDisabled": "Quản trị viên hệ thống đã tạm dừng dọn dẹp tự động. Chính sách và dữ liệu xem xét không thay đổi.",
+      "loading": "Đang tải…",
+      "empty": "Không có gì cần xem xét. Không ứng viên nào sắp đạt giới hạn lưu giữ.",
+      "expires": "Hết hạn {date}",
+      "erases": "Xóa vào {date}",
+      "exemptUntil": "Được miễn đến {date}"
+    },
+    "status": {
+      "expiring": "Sắp hết hạn",
+      "expired": "Đã hết hạn",
+      "quarantined": "Đang cách ly",
+      "exempt": "Được miễn"
+    },
+    "actions": {
+      "export": "Xuất dữ liệu",
+      "restore": "Khôi phục",
+      "hold": "Thêm lệnh lưu giữ pháp lý",
+      "clearHold": "Gỡ lệnh lưu giữ pháp lý",
+      "erase": "Xóa ngay",
+      "holdPrompt": "Lý do lưu giữ pháp lý (ví dụ: tranh chấp đang diễn ra):",
+      "eraseConfirm": "Thao tác này xóa vĩnh viễn {name} và toàn bộ dữ liệu của họ, và không thể hoàn tác. Nhập đầy đủ họ tên ứng viên để xác nhận:"
+    },
+    "errors": {
+      "save": "Không thể lưu cài đặt",
+      "restore": "Không thể khôi phục ứng viên",
+      "hold": "Không thể thêm lệnh lưu giữ pháp lý",
+      "clearHold": "Không thể gỡ lệnh lưu giữ pháp lý",
+      "erase": "Không thể xóa ứng viên",
+      "eraseNameMismatch": "Tên không khớp. Ứng viên chưa bị xóa."
+    }
+  }
+}

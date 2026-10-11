@@ -10,6 +10,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from pydantic import ValidationError
 
 log = logging.getLogger("app")
 
@@ -47,6 +48,10 @@ def install(app: FastAPI) -> None:
     async def http_handler(request: Request, exc: HTTPException):
         return JSONResponse(status_code=exc.status_code, headers=getattr(exc, "headers", None),
                             content=jsonable_encoder(_body(request, exc.detail, f"HTTP_{exc.status_code}")))
+
+    @app.exception_handler(ValidationError)
+    async def adapter_validation_handler(request: Request, exc: ValidationError):
+        return JSONResponse(status_code=422, content=_body(request, "Проверьте введённые данные", "VALIDATION_ERROR", errors=exc.errors(include_context=False, include_input=False)))
 
     @app.exception_handler(RequestValidationError)
     async def validation_handler(request: Request, exc: RequestValidationError):

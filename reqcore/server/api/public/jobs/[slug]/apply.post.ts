@@ -1,0 +1,772 @@
+import { eq, and, asc, sql } from 'drizzle-orm'
+import { fileTypeFromBuffer } from 'file-type'
+import { job, candidate, application, jobQuestion, questionResponse, document, organization, applicationSource, trackingLink } from '../../../../database/schema'
+import { publicApplicationSchema, publicJobSlugSchema } from '../../../../utils/schemas/publicApplication'
+import { createPreviewReadOnlyError } from '../../../../utils/previewReadOnly'
+import { autoScoreApplication } from '../../../../utils/ai/autoScore'
+import { parseDocument } from '../../../../utils/resume-parser'
+import {
+  ALLOWED_MIME_TYPES,
+  MAX_FILE_SIZE,
+  MAX_DOCUMENTS_PER_CANDIDATE,
+  MIME_TO_EXTENSION,
+  sanitizeFilename,
+} from '../../../../utils/schemas/document'
+import { restoreCandidateForPublicApplication } from '../../../../utils/candidate-retention'
+
+/** Rate limit: max 5 applications per IP per 15 minutes */
+const applyRateLimit = createRateLimiter({
+  windowMs: 15 * 60 * 1000,
+  maxRequests: 5,
+  message: 'Too many applications submitted. Please try again later.',
+})
+
+/**
+ * POST /api/public/jobs/:slug/apply
+ * Public application submission endpoint. No auth required.
+ *
+ * Supports two content types:
+ *   - `application/json` — standard form submission (no files)
+ *   - `multipart/form-data` — form with file uploads
+ *
+ * Security:
+ *   - IP-based rate limiting (5 requests per 15 minutes)
+ *   - Honeypot field for basic bot detection
+ *
+ * Flow:
+ * 1. Enforce rate limit
+ * 2. Validate the job exists and is open (resolve by slug)
+ * 3. Parse request body (JSON or multipart)
+ * 4. Validate all required custom questions are answered
+ * 5. Upsert candidate (deduplicate by email within the org)
+ * 6. Create application linking candidate → job
+ * 7. Store question responses
+ * 8. Upload files to S3 and create document records
+ */
+export default defineEventHandler(async (event) => {
+  // Enforce rate limit before any processing.
+  // Skipped outside production and in CI so local dev and E2E test environments
+  // are not throttled. NODE_ENV is set explicitly by the deployment environment.
+  if (process.env.NODE_ENV === 'production' && !process.env.CI && !process.env.GITHUB_ACTIONS) {
+    await applyRateLimit(event)
+  }
+
+  const { slug } = await getValidatedRouterParams(event, publicJobSlugSchema.parse)
+
+  // ─────────────────────────────────────────────
+  // 1. Detect content type and parse request
+  // ─────────────────────────────────────────────
+
+  const contentType = getHeader(event, 'content-type') ?? ''
+  const isMultipart = contentType.includes('multipart/form-data')
+
+  let firstName: string
+  let lastName: string
+  let email: string
+  let phone: string | undefined
+  let website: string | undefined
+  let responseArray: { questionId: string; value: string | string[] | number | boolean }[] = []
+  let coverLetterText: string | undefined
+  let sourceRef: string | undefined
+  let utmSource: string | undefined
+  let utmMedium: string | undefined
+  let utmCampaign: string | undefined
+  let utmTerm: string | undefined
+  let utmContent: string | undefined
+  const uploadedFiles: Map<string, { data: Buffer; filename: string; type?: string }> = new Map()
+  let resumeUpload: { data: Buffer; filename: string; type?: string } | null = null
+
+  if (isMultipart) {
+    // Parse multipart form data
+    const formData = await readMultipartFormData(event)
+    if (!formData) {
+      throw createError({ statusCode: 400, statusMessage: 'No form data received' })
+    }
+
+    const fields: Record<string, string> = {}
+
+    for (const part of formData) {
+      if (!part.name) continue
+
+      if (part.name === 'resume') {
+        // Built-in resume file
+        if (part.data && part.filename) {
+          resumeUpload = { data: Buffer.from(part.data), filename: part.filename, type: part.type }
+        }
+      } else if (part.name.startsWith('file:')) {
+        // File field: "file:<questionId>"
+        const questionId = part.name.slice(5)
+        if (part.data && part.filename) {
+          uploadedFiles.set(questionId, {
+            data: Buffer.from(part.data),
+            filename: part.filename,
+            type: part.type,
+          })
+        }
+      } else {
+        // Text field
+        fields[part.name] = part.data.toString()
+      }
+    }
+
+    // Parse responses from JSON string before validation
+    let rawResponses: unknown[] = []
+    if (fields.responses) {
+      try {
+        rawResponses = JSON.parse(fields.responses)
+      } catch {
+        throw createError({ statusCode: 400, statusMessage: 'Invalid responses format' })
+      }
+    }
+
+    // Validate all multipart text fields through the same Zod schema as JSON
+    const validated = publicApplicationSchema.parse({
+      firstName: fields.firstName?.trim() ?? '',
+      lastName: fields.lastName?.trim() ?? '',
+      email: fields.email?.trim() ?? '',
+      phone: fields.phone?.trim() || undefined,
+      website: fields.website || undefined,
+      coverLetterText: fields.coverLetterText?.trim() || undefined,
+      responses: rawResponses,
+      ref: fields.ref || undefined,
+      utmSource: fields.utmSource || undefined,
+      utmMedium: fields.utmMedium || undefined,
+      utmCampaign: fields.utmCampaign || undefined,
+      utmTerm: fields.utmTerm || undefined,
+      utmContent: fields.utmContent || undefined,
+    })
+
+    firstName = validated.firstName
+    lastName = validated.lastName
+    email = validated.email
+    phone = validated.phone
+    website = validated.website
+    coverLetterText = validated.coverLetterText
+    responseArray = validated.responses
+    sourceRef = validated.ref
+    utmSource = validated.utmSource
+    utmMedium = validated.utmMedium
+    utmCampaign = validated.utmCampaign
+    utmTerm = validated.utmTerm
+    utmContent = validated.utmContent
+  } else {
+    // Standard JSON body
+    const body = await readValidatedBody(event, publicApplicationSchema.parse)
+    firstName = body.firstName
+    lastName = body.lastName
+    email = body.email
+    phone = body.phone
+    website = body.website
+    coverLetterText = body.coverLetterText
+    responseArray = body.responses
+    sourceRef = body.ref
+    utmSource = body.utmSource
+    utmMedium = body.utmMedium
+    utmCampaign = body.utmCampaign
+    utmTerm = body.utmTerm
+    utmContent = body.utmContent
+  }
+
+  // Honeypot check — if the hidden `website` field is filled, silently reject
+  if (website) {
+    setResponseStatus(event, 200)
+    return { success: true }
+  }
+
+  // ─────────────────────────────────────────────
+  // 2. Fetch the job by slug and verify it's open
+  // ─────────────────────────────────────────────
+
+  const existingJob = await db.query.job.findFirst({
+    where: and(eq(job.slug, slug), eq(job.status, 'open')),
+    columns: {
+      id: true,
+      organizationId: true,
+      phoneRequirement: true,
+      requireResume: true,
+      requireCoverLetter: true,
+      autoScoreOnApply: true,
+    },
+  })
+
+  if (!existingJob) {
+    throw createError({ statusCode: 404, statusMessage: 'Job not found or not accepting applications' })
+  }
+
+  if (existingJob.phoneRequirement === 'required' && !phone?.trim()) {
+    throw createError({ statusCode: 422, statusMessage: 'Phone number is required for this position' })
+  }
+  if (existingJob.phoneRequirement === 'hidden') {
+    phone = undefined
+  }
+
+  // Validate required resume
+  if (existingJob.requireResume && !resumeUpload) {
+    throw createError({ statusCode: 422, statusMessage: 'Resume/CV is required for this position' })
+  }
+
+  // Validate required cover letter
+  if (existingJob.requireCoverLetter && !coverLetterText?.trim()) {
+    throw createError({ statusCode: 422, statusMessage: 'Cover letter is required for this position' })
+  }
+
+  const orgId = existingJob.organizationId
+  const jobId = existingJob.id
+
+  // Demo org is strictly read-only (defense in depth; middleware also blocks this route)
+  if (env.DEMO_ORG_SLUG) {
+    const [demoOrg] = await db
+      .select({ id: organization.id })
+      .from(organization)
+      .where(eq(organization.slug, env.DEMO_ORG_SLUG))
+      .limit(1)
+
+    if (demoOrg?.id === orgId) {
+      throw createPreviewReadOnlyError()
+    }
+  }
+
+  // ─────────────────────────────────────────────
+  // 3. Fetch questions and validate responses
+  // ─────────────────────────────────────────────
+
+  const questions = await db.query.jobQuestion.findMany({
+    where: and(eq(jobQuestion.jobId, jobId), eq(jobQuestion.organizationId, orgId)),
+    orderBy: [asc(jobQuestion.displayOrder)],
+  })
+
+  const requiredQuestionIds = questions
+    .filter((q) => q.required)
+    .map((q) => q.id)
+
+  // Check required non-file questions are answered
+  const answeredIds = new Set(responseArray.map((r) => r.questionId))
+
+  // For file_upload questions, check if files were provided
+  const fileQuestions = questions.filter((q) => q.type === 'file_upload')
+  const fileQuestionIds = new Set(fileQuestions.map((q) => q.id))
+
+  const unanswered = requiredQuestionIds.filter((id) => {
+    if (fileQuestionIds.has(id)) {
+      return !uploadedFiles.has(id)
+    }
+    return !answeredIds.has(id)
+  })
+
+  if (unanswered.length > 0) {
+    const unansweredLabels = questions
+      .filter((q) => unanswered.includes(q.id))
+      .map((q) => q.label)
+
+    throw createError({
+      statusCode: 422,
+      statusMessage: `Missing required answers: ${unansweredLabels.join(', ')}`,
+    })
+  }
+
+  // Filter out responses for questions that don't belong to this job
+  const validQuestionIds = new Set(questions.map((q) => q.id))
+  const validResponses = responseArray.filter((r) => validQuestionIds.has(r.questionId))
+
+  // ─────────────────────────────────────────────
+  // 4. Validate uploaded files (MIME via magic bytes, size)
+  // ─────────────────────────────────────────────
+
+  for (const [questionId, file] of uploadedFiles) {
+    // Only accept files for valid file_upload questions
+    if (!fileQuestionIds.has(questionId)) {
+      uploadedFiles.delete(questionId)
+      continue
+    }
+
+    // Check file size
+    if (file.data.length > MAX_FILE_SIZE) {
+      throw createError({
+        statusCode: 413,
+        statusMessage: `File too large. Maximum size is ${MAX_FILE_SIZE / 1024 / 1024} MB`,
+      })
+    }
+
+    // Validate MIME from magic bytes (not Content-Type header)
+    const detectedType = await fileTypeFromBuffer(file.data)
+    let mimeType = detectedType?.mime
+
+    // file-type detects OLE2 compound binary documents (.doc) as 'application/x-cfb'.
+    // Newer versions no longer return undefined for these files, so we must also
+    // check the detected type (not only the !mimeType case) to remap to application/msword.
+    if (!mimeType || mimeType === 'application/x-cfb') {
+      const OLE2_MAGIC = Buffer.from([0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1])
+      if (file.data.length >= 8 && Buffer.compare(file.data.subarray(0, 8), OLE2_MAGIC) === 0) {
+        mimeType = 'application/msword'
+      }
+    }
+
+    if (!mimeType || !ALLOWED_MIME_TYPES.includes(mimeType as typeof ALLOWED_MIME_TYPES[number])) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Invalid file type. Allowed: PDF, DOC, DOCX',
+      })
+    }
+
+    // Store the validated MIME type back on the file object
+    file.type = mimeType
+  }
+
+  // ─────────────────────────────────────────────
+  // 5. Validate resume MIME type early (before any DB writes)
+  // ─────────────────────────────────────────────
+
+  let resumeMimeType: string | undefined
+  if (resumeUpload) {
+    if (resumeUpload.data.length > MAX_FILE_SIZE) {
+      throw createError({
+        statusCode: 413,
+        statusMessage: `File too large. Maximum size is ${MAX_FILE_SIZE / 1024 / 1024} MB`,
+      })
+    }
+
+    const detectedType = await fileTypeFromBuffer(resumeUpload.data)
+    resumeMimeType = detectedType?.mime
+
+    if (!resumeMimeType || resumeMimeType === 'application/x-cfb') {
+      const OLE2_MAGIC = Buffer.from([0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1])
+      if (resumeUpload.data.length >= 8 && Buffer.compare(resumeUpload.data.subarray(0, 8), OLE2_MAGIC) === 0) {
+        resumeMimeType = 'application/msword'
+      }
+    }
+
+    if (!resumeMimeType || !ALLOWED_MIME_TYPES.includes(resumeMimeType as typeof ALLOWED_MIME_TYPES[number])) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Invalid file type for resume. Allowed: PDF, DOC, DOCX',
+      })
+    }
+  }
+
+  // ─────────────────────────────────────────────
+  // 6. Upsert candidate — deduplicate by email within this org
+  // ─────────────────────────────────────────────
+
+  let existingCandidate = await db.query.candidate.findFirst({
+    where: and(
+      eq(candidate.organizationId, orgId),
+      eq(candidate.email, email.toLowerCase()),
+    ),
+    columns: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      phone: true,
+      quarantinedAt: true,
+    },
+  })
+
+  let candidateId: string
+  let restoreFromQuarantine = false
+
+  if (existingCandidate) {
+    restoreFromQuarantine = existingCandidate.quarantinedAt !== null
+    const updates: Record<string, unknown> = { updatedAt: new Date() }
+    if (!existingCandidate.firstName) updates.firstName = firstName
+    if (!existingCandidate.lastName) updates.lastName = lastName
+    if (!existingCandidate.phone && phone) updates.phone = phone
+
+    const [updated] = await db.update(candidate)
+      .set(updates)
+      .where(eq(candidate.id, existingCandidate.id))
+      .returning({ id: candidate.id })
+
+    candidateId = updated!.id
+  } else {
+    const [created] = await db.insert(candidate).values({
+      organizationId: orgId,
+      firstName,
+      lastName,
+      email: email.toLowerCase(),
+      phone,
+    }).returning({ id: candidate.id })
+
+    candidateId = created!.id
+  }
+
+  // ─────────────────────────────────────────────
+  // 7. Check for duplicate application
+  // ─────────────────────────────────────────────
+
+  const existingApplication = await db.query.application.findFirst({
+    where: and(
+      eq(application.organizationId, orgId),
+      eq(application.candidateId, candidateId),
+      eq(application.jobId, jobId),
+    ),
+    columns: { id: true },
+  })
+
+  if (existingApplication) {
+    throw createError({
+      statusCode: 409,
+      statusMessage: 'You have already applied to this position',
+    })
+  }
+
+  if (restoreFromQuarantine) {
+    await restoreCandidateForPublicApplication(orgId, candidateId)
+  }
+
+  // ─────────────────────────────────────────────
+  // 8. Create application
+  // ─────────────────────────────────────────────
+
+  const [newApplication] = await db.insert(application).values({
+    organizationId: orgId,
+    candidateId,
+    jobId,
+    status: 'new',
+    coverLetterText: coverLetterText || null,
+  }).returning({ id: application.id })
+
+  // ─────────────────────────────────────────────
+  // 8b. Record source attribution
+  // ─────────────────────────────────────────────
+
+  try {
+    const refererHeader = getHeader(event, 'referer') || getHeader(event, 'referrer')
+    const referrerDomain = refererHeader ? extractDomain(refererHeader) : null
+
+    // Resolve tracking link from ?ref= code
+    let resolvedLink: { id: string; channel: typeof trackingLink.$inferSelect['channel'] } | null = null
+    if (sourceRef) {
+      const found = await db.query.trackingLink.findFirst({
+        where: and(eq(trackingLink.code, sourceRef), eq(trackingLink.organizationId, orgId)),
+        columns: { id: true, channel: true },
+      })
+      if (found) {
+        resolvedLink = found
+        // Increment application counter on tracking link
+        await db.update(trackingLink)
+          .set({ applicationCount: sql`${trackingLink.applicationCount} + 1` })
+          .where(eq(trackingLink.id, found.id))
+      }
+    }
+
+    // Determine channel: tracking link > utm_source mapping > referrer mapping > direct
+    const channel = resolvedLink?.channel
+      ?? mapUtmToChannel(utmSource)
+      ?? mapReferrerToChannel(referrerDomain)
+      ?? 'direct'
+
+    await db.insert(applicationSource).values({
+      organizationId: orgId,
+      applicationId: newApplication!.id,
+      channel: channel as typeof applicationSource.$inferInsert.channel,
+      trackingLinkId: resolvedLink?.id ?? null,
+      utmSource: utmSource ?? null,
+      utmMedium: utmMedium ?? null,
+      utmCampaign: utmCampaign ?? null,
+      utmTerm: utmTerm ?? null,
+      utmContent: utmContent ?? null,
+      referrerDomain,
+    })
+  } catch (sourceErr) {
+    // Source tracking is best-effort — never fail an application for attribution
+    logWarn('application.source_tracking_failed', {
+      application_id: newApplication?.id,
+      error_message: sourceErr instanceof Error ? sourceErr.message : String(sourceErr),
+    })
+  }
+
+  // ─────────────────────────────────────────────
+  // 9. Store question responses
+  // ─────────────────────────────────────────────
+
+  if (validResponses.length > 0) {
+    await db.insert(questionResponse).values(
+      validResponses.map((r) => ({
+        organizationId: orgId,
+        applicationId: newApplication!.id,
+        questionId: r.questionId,
+        value: r.value,
+      })),
+    )
+  }
+
+  // ─────────────────────────────────────────────
+  // 10. Upload files to S3 and create document records
+  // ─────────────────────────────────────────────
+
+  // Enforce per-candidate document limit (same as authenticated upload)
+  const builtInFileCount = resumeUpload ? 1 : 0
+  const totalNewFiles = uploadedFiles.size + builtInFileCount
+  if (totalNewFiles > 0) {
+    const existingDocCount = await db.$count(
+      document,
+      and(
+        eq(document.candidateId, candidateId),
+        eq(document.organizationId, orgId),
+      ),
+    )
+
+    if (existingDocCount + totalNewFiles > MAX_DOCUMENTS_PER_CANDIDATE) {
+      throw createError({
+        statusCode: 409,
+        statusMessage: `Document limit reached. Maximum ${MAX_DOCUMENTS_PER_CANDIDATE} documents per candidate`,
+      })
+    }
+  }
+
+  const uploadedDocIds: string[] = []
+
+  for (const [questionId, file] of uploadedFiles) {
+    const docId = crypto.randomUUID()
+    const mimeType = file.type!
+    const extension = MIME_TO_EXTENSION[mimeType] ?? 'bin'
+    const storageKey = `${orgId}/${candidateId}/${docId}.${extension}`
+
+    // Determine document type from question label heuristics
+    const question = questions.find((q) => q.id === questionId)
+    const label = question?.label?.toLowerCase() ?? ''
+    let docType: 'resume' | 'cover_letter' | 'other' = 'other'
+    if (label.includes('resume') || label.includes('cv')) {
+      docType = 'resume'
+    } else if (label.includes('cover letter')) {
+      docType = 'cover_letter'
+    }
+
+    try {
+      await uploadToS3(storageKey, file.data, mimeType)
+
+      // Parse document content (best-effort — does not block upload)
+      const parsedContent = await parseDocument(file.data, mimeType)
+
+      const [created] = await db.insert(document).values({
+        id: docId,
+        organizationId: orgId,
+        candidateId,
+        type: docType,
+        storageKey,
+        originalFilename: sanitizeFilename(file.filename),
+        mimeType,
+        sizeBytes: file.data.length,
+        parsedContent: parsedContent as any,
+      }).returning({ id: document.id })
+
+      uploadedDocIds.push(created!.id)
+
+      // Store a response linking the file_upload question to the document ID
+      await db.insert(questionResponse).values({
+        organizationId: orgId,
+        applicationId: newApplication!.id,
+        questionId,
+        value: docId,
+      })
+    } catch (uploadError) {
+      // Clean up orphaned S3 object on DB failure
+      try {
+        await deleteFromS3(storageKey)
+      } catch (cleanupError) {
+        logWarn('application.s3_orphan_cleanup_failed', {
+          storage_key: storageKey,
+          error_message: cleanupError instanceof Error ? cleanupError.message : String(cleanupError),
+        })
+      }
+      logError('application.file_upload_failed', {
+        job_id: jobId,
+        application_id: newApplication?.id,
+        question_id: questionId,
+        error_message: uploadError instanceof Error ? uploadError.message : String(uploadError),
+      })
+      // Continue processing — don't fail the entire application for a file upload error
+    }
+  }
+
+  // ─────────────────────────────────────────────
+  // 11. Upload built-in resume file
+  // ─────────────────────────────────────────────
+
+  if (resumeUpload) {
+    const file = resumeUpload
+    const mimeType = resumeMimeType!
+
+    const docId = crypto.randomUUID()
+    const extension = MIME_TO_EXTENSION[mimeType] ?? 'bin'
+    const storageKey = `${orgId}/${candidateId}/${docId}.${extension}`
+
+    try {
+      await uploadToS3(storageKey, file.data, mimeType)
+
+      // Parse resume content (best-effort — does not block upload)
+      const parsedContent = await parseDocument(file.data, mimeType)
+
+      await db.insert(document).values({
+        id: docId,
+        organizationId: orgId,
+        candidateId,
+        type: 'resume',
+        storageKey,
+        originalFilename: sanitizeFilename(file.filename),
+        mimeType,
+        sizeBytes: file.data.length,
+        parsedContent: parsedContent as any,
+      })
+    } catch (uploadError) {
+      try {
+        await deleteFromS3(storageKey)
+      } catch (cleanupError) {
+        logWarn('application.s3_orphan_cleanup_failed', {
+          storage_key: storageKey,
+          error_message: cleanupError instanceof Error ? cleanupError.message : String(cleanupError),
+        })
+      }
+      logError('application.resume_upload_failed', {
+        job_id: jobId,
+        application_id: newApplication?.id,
+        error_message: uploadError instanceof Error ? uploadError.message : String(uploadError),
+      })
+
+      // Roll back: delete the application so the user can fix the file and retry
+      try {
+        // Delete question responses first (FK constraint)
+        await db.delete(questionResponse)
+          .where(eq(questionResponse.applicationId, newApplication!.id))
+        await db.delete(application)
+          .where(eq(application.id, newApplication!.id))
+      } catch (rollbackError) {
+        logError('application.rollback_failed', {
+          application_id: newApplication!.id,
+          error_message: rollbackError instanceof Error ? rollbackError.message : String(rollbackError),
+        })
+      }
+
+      throw createError({ statusCode: 502, statusMessage: 'Failed to upload your resume. Please try again.' })
+    }
+  }
+
+  // ─────────────────────────────────────────────
+  // 12. Fire-and-forget auto AI scoring if enabled
+  // ─────────────────────────────────────────────
+
+  if (existingJob.autoScoreOnApply && newApplication) {
+    autoScoreApplication(newApplication.id, orgId).catch((err) => {
+      logError('application.auto_score_failed', {
+        application_id: newApplication.id,
+        job_id: jobId,
+        error_message: err instanceof Error ? err.message : String(err),
+      })
+    })
+  }
+
+  // Track public application on the server side (no auth session)
+  trackEvent(event, null, 'application received', {
+    job_slug: slug,
+    job_id: existingJob.id,
+    application_id: newApplication?.id,
+    has_resume: !!resumeUpload,
+    auto_score_enabled: !!existingJob.autoScoreOnApply,
+  })
+
+  logApiRequest(event, null, 'application.received', {
+    job_slug: slug,
+    job_id: existingJob.id,
+    application_id: newApplication?.id,
+    has_resume: !!resumeUpload,
+    question_count: validResponses.length,
+    file_count: uploadedFiles.size,
+    auto_score_enabled: !!existingJob.autoScoreOnApply,
+    is_returning_candidate: !!existingCandidate,
+  })
+
+  setResponseStatus(event, 201)
+  return { success: true }
+})
+
+// ─────────────────────────────────────────────
+// Source attribution helpers
+// ─────────────────────────────────────────────
+
+/** Extract domain from a URL, stripping www. prefix. Returns null on invalid URLs. */
+function extractDomain(url: string): string | null {
+  try {
+    const parsed = new URL(url)
+    return parsed.hostname.replace(/^www\./, '')
+  } catch {
+    return null
+  }
+}
+
+/** Map common utm_source values to canonical source channels */
+function mapUtmToChannel(utmSource: string | undefined): string | null {
+  if (!utmSource) return null
+  const source = utmSource.toLowerCase().trim()
+  const mapping: Record<string, string> = {
+    linkedin: 'linkedin',
+    indeed: 'indeed',
+    glassdoor: 'glassdoor',
+    ziprecruiter: 'ziprecruiter',
+    monster: 'monster',
+    handshake: 'handshake',
+    angellist: 'angellist',
+    wellfound: 'wellfound',
+    dice: 'dice',
+    stackoverflow: 'stackoverflow',
+    'stack overflow': 'stackoverflow',
+    weworkremotely: 'weworkremotely',
+    remoteok: 'remoteok',
+    'remote ok': 'remoteok',
+    builtin: 'builtin',
+    hired: 'hired',
+    lever: 'lever',
+    greenhouse: 'greenhouse_board',
+    'google jobs': 'google_jobs',
+    google_jobs: 'google_jobs',
+    facebook: 'facebook',
+    twitter: 'twitter',
+    x: 'twitter',
+    instagram: 'instagram',
+    tiktok: 'tiktok',
+    reddit: 'reddit',
+    referral: 'referral',
+    email: 'email',
+    newsletter: 'email',
+    event: 'event',
+    agency: 'agency',
+  }
+  return mapping[source] ?? null
+}
+
+/** Map referrer domains to canonical source channels */
+function mapReferrerToChannel(domain: string | null): string | null {
+  if (!domain) return null
+  const d = domain.toLowerCase()
+  const mapping: Record<string, string> = {
+    'linkedin.com': 'linkedin',
+    'indeed.com': 'indeed',
+    'glassdoor.com': 'glassdoor',
+    'ziprecruiter.com': 'ziprecruiter',
+    'monster.com': 'monster',
+    'joinhandshake.com': 'handshake',
+    'angel.co': 'angellist',
+    'wellfound.com': 'wellfound',
+    'dice.com': 'dice',
+    'stackoverflow.com': 'stackoverflow',
+    'weworkremotely.com': 'weworkremotely',
+    'remoteok.com': 'remoteok',
+    'builtin.com': 'builtin',
+    'hired.com': 'hired',
+    'lever.co': 'lever',
+    'boards.greenhouse.io': 'greenhouse_board',
+    'jobs.google.com': 'google_jobs',
+    'google.com': 'google_jobs',
+    'facebook.com': 'facebook',
+    'twitter.com': 'twitter',
+    'x.com': 'twitter',
+    'instagram.com': 'instagram',
+    'tiktok.com': 'tiktok',
+    'reddit.com': 'reddit',
+  }
+  // Check for exact match first, then suffix match for subdomains
+  if (mapping[d]) return mapping[d]!
+  for (const [key, channel] of Object.entries(mapping)) {
+    if (d.endsWith(`.${key}`) || d === key) return channel
+  }
+  return null
+}

@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import re
+from functools import lru_cache
 from typing import Protocol
 
 
@@ -21,6 +22,21 @@ class LLMClient(Protocol):
 class NullLLM:
     async def complete_json(self, system: str, user: str) -> dict:  # noqa: ARG002
         raise RuntimeError("LLM не настроен (задайте LLM_BASE_URL, LLM_MODEL, LLM_API_KEY)")
+
+@lru_cache(maxsize=1)
+def get_llm():
+    from app.core.config import settings
+    if settings.llm_provider=='gigachat':
+        from app.tasks.rag.gigachat import GigaChatLLM
+        if not (settings.gigachat_authorization_key.get_secret_value() or settings.gigachat_client_secret.get_secret_value()):
+            return NullLLM()
+        return GigaChatLLM(credentials=settings.gigachat_authorization_key.get_secret_value(),
+            client_id=settings.gigachat_client_id,client_secret=settings.gigachat_client_secret.get_secret_value(),
+            scope=settings.gigachat_scope,model=settings.gigachat_model,base_url=settings.gigachat_base_url,
+            oauth_url=settings.gigachat_oauth_url,ca_bundle=settings.gigachat_ca_bundle)
+    if settings.llm_base_url and settings.llm_model:
+        return OpenAICompatLLM(settings.llm_base_url,settings.llm_api_key,settings.llm_model)
+    return NullLLM()
 
 
 class OpenAICompatLLM:

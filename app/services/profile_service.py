@@ -14,7 +14,7 @@ async def get_candidate_by_user(db: AsyncSession, user_id: uuid.UUID) -> Candida
     result = await db.execute(
         select(CandidateProfile)
         .where(CandidateProfile.user_id == user_id)
-        .options(selectinload(CandidateProfile.skills).selectinload(CandidateSkill.skill))
+        .options(selectinload(CandidateProfile.skills).selectinload(CandidateSkill.skill), selectinload(CandidateProfile.category))
     )
     return result.scalar_one_or_none()
 

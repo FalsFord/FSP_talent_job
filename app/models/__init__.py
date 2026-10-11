@@ -25,3 +25,6 @@ __all__ = [
     "Notification", "InvitationEvent", "ContactReveal", "EmailToken", "ShortlistSnapshot", "EmployerTask",
     "TaskAssignment",
 ]
+from app.models.endpoint import EndpointState, ChatMessage
+
+from app.models.vacancy import ArchivedVacancy

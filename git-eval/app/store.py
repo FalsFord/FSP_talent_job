@@ -108,5 +108,5 @@ class Store:
     def undelivered(self) -> list[str]:
         with self._conn() as c:
             rows = c.execute("SELECT id FROM evaluations WHERE status IN ('done','failed') AND callback_url IS NOT NULL "
-                             "AND callback_status IS NULL").fetchall()
+                             "AND (callback_status IS NULL OR callback_status='failed')").fetchall()
         return [r["id"] for r in rows]

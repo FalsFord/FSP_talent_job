@@ -196,13 +196,13 @@ async def preview_candidate(candidate_id: UUID, user: User = Depends(require_rol
                             db: AsyncSession = Depends(get_db)):
     ep = await _employer_profile(db, user.id)
     result = await db.execute(
-        select(CandidateProfile).where(CandidateProfile.id == candidate_id, CandidateProfile.onboarding_completed == True,  # noqa: E712
-                                       CandidateProfile.is_discoverable == True)  # noqa: E712
+        select(CandidateProfile).where(CandidateProfile.id == candidate_id)
         .options(selectinload(CandidateProfile.category),
                  selectinload(CandidateProfile.skills).selectinload(CandidateSkill.skill),
                  selectinload(CandidateProfile.fsp_link).selectinload(FSPParticipantLink.achievements)))
     c = result.scalar_one_or_none()
-    if not c:
+    from app.services.matching_service import can_view_candidate_profile
+    if not c or not await can_view_candidate_profile(db, ep.id, c):
         raise HTTPException(status_code=404, detail="Candidate not found")
     contacts = await contacts_for(db, ep.id, c)
     ach = c.fsp_link.achievements if c.fsp_link and c.fsp_link.achievements else []

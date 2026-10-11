@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import func, select, update
+from sqlalchemy import func, select, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import get_current_user, get_db
@@ -10,6 +10,16 @@ from app.models.platform import Notification
 from app.models.user import User
 
 router = APIRouter(prefix="/notifications", tags=["notifications"])
+
+@router.delete('',status_code=204)
+async def delete_all_notifications(user:User=Depends(get_current_user),db:AsyncSession=Depends(get_db)):
+    await db.execute(delete(Notification).where(Notification.user_id==user.id));await db.commit()
+
+@router.delete('/{notification_id}',status_code=204)
+async def delete_notification(notification_id:UUID,user:User=Depends(get_current_user),db:AsyncSession=Depends(get_db)):
+    n=await db.get(Notification,notification_id)
+    if not n or n.user_id!=user.id:raise DomainError('NOT_FOUND','Уведомление не найдено',404)
+    await db.delete(n);await db.commit()
 
 
 @router.get("")

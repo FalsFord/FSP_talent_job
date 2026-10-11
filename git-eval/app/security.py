@@ -56,7 +56,7 @@ def validate_repo_url(url: str, s: Settings) -> str:
     host = (parts.hostname or "").lower()
     if host not in s.allowed_hosts:
         raise UrlRejected(f"Хост {host or '?'} не в списке разрешённых")
-    if parts.query or parts.fragment or not _PATH_RE.match(parts.path):
+    if parts.query or parts.fragment or not _PATH_RE.match(parts.path) or any(p in ('.','..') for p in parts.path.split('/')):
         raise UrlRejected("URL должен иметь вид https://host/owner/repo")
     _check_public(host)
     return f"https://{host}{parts.path.rstrip('/')}"

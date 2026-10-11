@@ -1,4 +1,5 @@
-FROM python:3.12-slim
+FROM python:3.12.14-slim
+USER root
 RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 RUN useradd -m -u 10001 app && mkdir /data && chown app /data

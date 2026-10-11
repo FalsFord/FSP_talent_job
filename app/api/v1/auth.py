@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.deps import get_current_user, get_db
 from app.core.errors import DomainError
-from app.core.security import create_access_token, hash_password, verify_password
+from app.core.security import create_access_token, hash_password, verify_password, password_version
 from app.models.candidate import CandidateProfile
 from app.models.employer import Company, EmployerProfile
 from app.models.user import User, UserRole
@@ -48,7 +48,7 @@ async def register(body: RegisterIn, db: AsyncSession = Depends(get_db)):
     await db.commit()
     if need_verify:     # ТЗ п.2.2(4): регистрация по e-mail с подтверждением адреса — токен выдаётся после подтверждения
         return TokenOut(access_token="", verification_required=True, dev_verification_token=raw if settings.debug else None)
-    return TokenOut(access_token=create_access_token(str(user.id), {"role": user.role.value}))
+    return TokenOut(access_token=create_access_token(str(user.id), {"role": user.role.value, "ver": password_version(user)}))
 
 
 @router.post("/verify-email", response_model=MessageOut)
@@ -76,7 +76,7 @@ async def login(body: LoginIn, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     if settings.require_email_verification and not user.email_verified:
         raise DomainError("EMAIL_NOT_VERIFIED", "Подтвердите адрес электронной почты", 403)
-    return TokenOut(access_token=create_access_token(str(user.id), {"role": user.role.value}))
+    return TokenOut(access_token=create_access_token(str(user.id), {"role": user.role.value, "ver": password_version(user)}))
 
 
 @router.get("/me", response_model=UserOut)

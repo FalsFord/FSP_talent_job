@@ -105,6 +105,7 @@ class TaskAssignment(Base):
     status: Mapped[str] = mapped_column(String(16), default="assigned")     # assigned | submitted | reviewed
     answer: Mapped[str | None] = mapped_column(Text)
     auto_score: Mapped[float | None] = mapped_column(Float)
+    eval_details: Mapped[dict | None] = mapped_column(JSONB)
     reviewer_score: Mapped[float | None] = mapped_column(Float)
     assigned_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     submitted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
