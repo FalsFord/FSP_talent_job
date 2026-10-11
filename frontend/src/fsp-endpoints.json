@@ -1,0 +1,704 @@
+[
+  {
+    "method": "POST",
+    "path": "/api/v1/auth/register",
+    "operationId": "register_api_v1_auth_register_post",
+    "roles": [],
+    "summary": "Register",
+    "module": "app.api.v1.auth"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/auth/verify-email",
+    "operationId": "verify_email_api_v1_auth_verify_email_post",
+    "roles": [],
+    "summary": "Verify Email",
+    "module": "app.api.v1.auth"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/auth/resend-verification",
+    "operationId": "resend_verification_api_v1_auth_resend_verification_post",
+    "roles": [],
+    "summary": "Resend Verification",
+    "module": "app.api.v1.auth"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/auth/login",
+    "operationId": "login_api_v1_auth_login_post",
+    "roles": [],
+    "summary": "Login",
+    "module": "app.api.v1.auth"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/auth/me",
+    "operationId": "me_api_v1_auth_me_get",
+    "roles": [],
+    "summary": "Me",
+    "module": "app.api.v1.auth"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/candidates/me/profile",
+    "operationId": "get_my_profile_api_v1_candidates_me_profile_get",
+    "roles": [
+      "candidate"
+    ],
+    "summary": "Get My Profile",
+    "module": "app.api.v1.candidates"
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/v1/candidates/me/profile",
+    "operationId": "update_my_profile_api_v1_candidates_me_profile_patch",
+    "roles": [
+      "candidate"
+    ],
+    "summary": "Update My Profile",
+    "module": "app.api.v1.candidates"
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/v1/candidates/me/privacy",
+    "operationId": "update_privacy_api_v1_candidates_me_privacy_patch",
+    "roles": [
+      "candidate"
+    ],
+    "summary": "Update Privacy",
+    "module": "app.api.v1.candidates"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/candidates/me/fsp-link",
+    "operationId": "fsp_link_api_v1_candidates_me_fsp_link_post",
+    "roles": [
+      "candidate"
+    ],
+    "summary": "Fsp Link",
+    "module": "app.api.v1.candidates"
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/v1/candidates/me/fsp-link",
+    "operationId": "fsp_unlink_api_v1_candidates_me_fsp_link_delete",
+    "roles": [
+      "candidate"
+    ],
+    "summary": "Fsp Unlink",
+    "module": "app.api.v1.candidates"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/candidates/me/category",
+    "operationId": "my_category_api_v1_candidates_me_category_get",
+    "roles": [
+      "candidate"
+    ],
+    "summary": "My Category",
+    "module": "app.api.v1.candidates"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/assessments/onboarding/start",
+    "operationId": "onboarding_start_api_v1_assessments_onboarding_start_post",
+    "roles": [
+      "candidate"
+    ],
+    "summary": "Onboarding Start",
+    "module": "app.api.v1.assessments"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/assessments/start",
+    "operationId": "start_api_v1_assessments_start_post",
+    "roles": [
+      "candidate"
+    ],
+    "summary": "Start",
+    "module": "app.api.v1.assessments"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/assessments/status",
+    "operationId": "status_api_v1_assessments_status_get",
+    "roles": [
+      "candidate"
+    ],
+    "summary": "Status",
+    "module": "app.api.v1.assessments"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/assessments/sessions/{session_id}/questions",
+    "operationId": "session_questions_api_v1_assessments_sessions__session_id__questions_get",
+    "roles": [
+      "candidate"
+    ],
+    "summary": "Session Questions",
+    "module": "app.api.v1.assessments"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/v1/assessments/sessions/{session_id}/answers/{instance_id}",
+    "operationId": "autosave_api_v1_assessments_sessions__session_id__answers__instance_id__put",
+    "roles": [
+      "candidate"
+    ],
+    "summary": "Autosave",
+    "module": "app.api.v1.assessments"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/assessments/sessions/{session_id}/events",
+    "operationId": "events_api_v1_assessments_sessions__session_id__events_post",
+    "roles": [
+      "candidate"
+    ],
+    "summary": "Events",
+    "module": "app.api.v1.assessments"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/assessments/sessions/{session_id}/submit",
+    "operationId": "session_submit_api_v1_assessments_sessions__session_id__submit_post",
+    "roles": [
+      "candidate"
+    ],
+    "summary": "Session Submit",
+    "module": "app.api.v1.assessments"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/assessments/sessions/{session_id}/result",
+    "operationId": "session_result_api_v1_assessments_sessions__session_id__result_get",
+    "roles": [
+      "candidate"
+    ],
+    "summary": "Session Result",
+    "module": "app.api.v1.assessments"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/assessments/history",
+    "operationId": "history_api_v1_assessments_history_get",
+    "roles": [
+      "candidate"
+    ],
+    "summary": "History",
+    "module": "app.api.v1.assessments"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/employers/me/company",
+    "operationId": "get_company_api_v1_employers_me_company_get",
+    "roles": [
+      "employer"
+    ],
+    "summary": "Get Company",
+    "module": "app.api.v1.employers"
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/v1/employers/me/company",
+    "operationId": "update_company_api_v1_employers_me_company_patch",
+    "roles": [
+      "employer"
+    ],
+    "summary": "Update Company",
+    "module": "app.api.v1.employers"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/employers/needs",
+    "operationId": "create_employer_need_api_v1_employers_needs_post",
+    "roles": [
+      "employer"
+    ],
+    "summary": "Create Employer Need",
+    "module": "app.api.v1.employers"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/employers/needs",
+    "operationId": "list_needs_api_v1_employers_needs_get",
+    "roles": [
+      "employer"
+    ],
+    "summary": "List Needs",
+    "module": "app.api.v1.employers"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/employers/needs/{need_id}/candidates",
+    "operationId": "need_candidates_api_v1_employers_needs__need_id__candidates_get",
+    "roles": [
+      "employer"
+    ],
+    "summary": "Need Candidates",
+    "module": "app.api.v1.employers"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/employers/needs/{need_id}/categories",
+    "operationId": "need_categories_api_v1_employers_needs__need_id__categories_get",
+    "roles": [
+      "employer"
+    ],
+    "summary": "Need Categories",
+    "module": "app.api.v1.employers"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/employers/needs/{need_id}/shortlist",
+    "operationId": "build_shortlist_api_v1_employers_needs__need_id__shortlist_post",
+    "roles": [
+      "employer"
+    ],
+    "summary": "Build Shortlist",
+    "module": "app.api.v1.employers"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/employers/needs/{need_id}/shortlist/snapshots",
+    "operationId": "list_snapshots_api_v1_employers_needs__need_id__shortlist_snapshots_get",
+    "roles": [
+      "employer"
+    ],
+    "summary": "List Snapshots",
+    "module": "app.api.v1.employers"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/employers/needs/{need_id}/shortlist/snapshots/{snapshot_id}",
+    "operationId": "get_snapshot_api_v1_employers_needs__need_id__shortlist_snapshots__snapshot_id__get",
+    "roles": [
+      "employer"
+    ],
+    "summary": "Get Snapshot",
+    "module": "app.api.v1.employers"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/employers/needs/{need_id}/task-preview",
+    "operationId": "task_preview_api_v1_employers_needs__need_id__task_preview_post",
+    "roles": [
+      "employer"
+    ],
+    "summary": "Task Preview",
+    "module": "app.api.v1.employers"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/employers/candidates/{candidate_id}/contacts",
+    "operationId": "candidate_contacts_api_v1_employers_candidates__candidate_id__contacts_get",
+    "roles": [
+      "employer"
+    ],
+    "summary": "Candidate Contacts",
+    "module": "app.api.v1.employers"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/employers/candidates/{candidate_id}/preview",
+    "operationId": "preview_candidate_api_v1_employers_candidates__candidate_id__preview_get",
+    "roles": [
+      "employer"
+    ],
+    "summary": "Preview Candidate",
+    "module": "app.api.v1.employers"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/invitations",
+    "operationId": "create_invitation_api_v1_invitations_post",
+    "roles": [
+      "employer"
+    ],
+    "summary": "Create Invitation",
+    "module": "app.api.v1.invitations"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/invitations/sent",
+    "operationId": "sent_api_v1_invitations_sent_get",
+    "roles": [
+      "employer"
+    ],
+    "summary": "Sent",
+    "module": "app.api.v1.invitations"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/invitations/received",
+    "operationId": "received_api_v1_invitations_received_get",
+    "roles": [
+      "candidate"
+    ],
+    "summary": "Received",
+    "module": "app.api.v1.invitations"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/invitations/{invitation_id}",
+    "operationId": "get_invitation_api_v1_invitations__invitation_id__get",
+    "roles": [],
+    "summary": "Get Invitation",
+    "module": "app.api.v1.invitations"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/invitations/{invitation_id}/events",
+    "operationId": "events_api_v1_invitations__invitation_id__events_get",
+    "roles": [],
+    "summary": "Events",
+    "module": "app.api.v1.invitations"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/invitations/{invitation_id}/accept",
+    "operationId": "accept_api_v1_invitations__invitation_id__accept_post",
+    "roles": [
+      "candidate"
+    ],
+    "summary": "Accept",
+    "module": "app.api.v1.invitations"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/invitations/{invitation_id}/decline",
+    "operationId": "decline_api_v1_invitations__invitation_id__decline_post",
+    "roles": [
+      "candidate"
+    ],
+    "summary": "Decline",
+    "module": "app.api.v1.invitations"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/invitations/{invitation_id}/withdraw",
+    "operationId": "withdraw_api_v1_invitations__invitation_id__withdraw_post",
+    "roles": [
+      "employer"
+    ],
+    "summary": "Withdraw",
+    "module": "app.api.v1.invitations"
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/v1/invitations/{invitation_id}",
+    "operationId": "update_status_api_v1_invitations__invitation_id__patch",
+    "roles": [],
+    "summary": "Update Status",
+    "module": "app.api.v1.invitations"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/ref/specializations",
+    "operationId": "list_specializations_api_v1_ref_specializations_get",
+    "roles": [],
+    "summary": "List Specializations",
+    "module": "app.api.v1.ref"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/ref/grades",
+    "operationId": "list_grades_api_v1_ref_grades_get",
+    "roles": [],
+    "summary": "List Grades",
+    "module": "app.api.v1.ref"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/search/candidates",
+    "operationId": "search_candidates_endpoint_api_v1_search_candidates_post",
+    "roles": [
+      "employer"
+    ],
+    "summary": "Search Candidates Endpoint",
+    "module": "app.api.v1.search"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/vacancies",
+    "operationId": "list_vacancies_api_v1_vacancies_get",
+    "roles": [],
+    "summary": "List Vacancies",
+    "module": "app.api.v1.vacancies"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/vacancies/mine",
+    "operationId": "my_vacancies_api_v1_vacancies_mine_get",
+    "roles": [
+      "employer"
+    ],
+    "summary": "My Vacancies",
+    "module": "app.api.v1.vacancies"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/vacancies/applications/mine",
+    "operationId": "my_applications_api_v1_vacancies_applications_mine_get",
+    "roles": [
+      "candidate"
+    ],
+    "summary": "My Applications",
+    "module": "app.api.v1.vacancies"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/vacancies",
+    "operationId": "create_vacancy_api_v1_vacancies_post",
+    "roles": [
+      "employer"
+    ],
+    "summary": "Create Vacancy",
+    "module": "app.api.v1.vacancies"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/v1/vacancies/{vacancy_id}",
+    "operationId": "update_vacancy_api_v1_vacancies__vacancy_id__put",
+    "roles": [
+      "employer"
+    ],
+    "summary": "Update Vacancy",
+    "module": "app.api.v1.vacancies"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/vacancies/{vacancy_id}/close",
+    "operationId": "close_vacancy_api_v1_vacancies__vacancy_id__close_post",
+    "roles": [
+      "employer"
+    ],
+    "summary": "Close Vacancy",
+    "module": "app.api.v1.vacancies"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/vacancies/{vacancy_id}/apply",
+    "operationId": "apply_vacancy_api_v1_vacancies__vacancy_id__apply_post",
+    "roles": [
+      "candidate"
+    ],
+    "summary": "Apply Vacancy",
+    "module": "app.api.v1.vacancies"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/vacancies/{vacancy_id}/applications",
+    "operationId": "vacancy_applications_api_v1_vacancies__vacancy_id__applications_get",
+    "roles": [
+      "employer"
+    ],
+    "summary": "Vacancy Applications",
+    "module": "app.api.v1.vacancies"
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/v1/vacancies/applications/{application_id}",
+    "operationId": "update_application_api_v1_vacancies_applications__application_id__patch",
+    "roles": [
+      "employer"
+    ],
+    "summary": "Update Application",
+    "module": "app.api.v1.vacancies"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/notifications",
+    "operationId": "list_notifications_api_v1_notifications_get",
+    "roles": [],
+    "summary": "List Notifications",
+    "module": "app.api.v1.notifications"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/notifications/{notification_id}/read",
+    "operationId": "mark_read_api_v1_notifications__notification_id__read_post",
+    "roles": [],
+    "summary": "Mark Read",
+    "module": "app.api.v1.notifications"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/notifications/read-all",
+    "operationId": "read_all_api_v1_notifications_read_all_post",
+    "roles": [],
+    "summary": "Read All",
+    "module": "app.api.v1.notifications"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/employers/tasks/draft",
+    "operationId": "draft_api_v1_employers_tasks_draft_post",
+    "roles": [
+      "employer"
+    ],
+    "summary": "Draft",
+    "module": "app.api.v1.tasks"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/employers/tasks",
+    "operationId": "create_task_api_v1_employers_tasks_post",
+    "roles": [
+      "employer"
+    ],
+    "summary": "Create Task",
+    "module": "app.api.v1.tasks"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/employers/tasks",
+    "operationId": "list_tasks_api_v1_employers_tasks_get",
+    "roles": [
+      "employer"
+    ],
+    "summary": "List Tasks",
+    "module": "app.api.v1.tasks"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/employers/tasks/{task_id}/assign",
+    "operationId": "assign_api_v1_employers_tasks__task_id__assign_post",
+    "roles": [
+      "employer"
+    ],
+    "summary": "Assign",
+    "module": "app.api.v1.tasks"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/employers/tasks/{task_id}/assignments",
+    "operationId": "assignments_api_v1_employers_tasks__task_id__assignments_get",
+    "roles": [
+      "employer"
+    ],
+    "summary": "Assignments",
+    "module": "app.api.v1.tasks"
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/v1/employers/tasks/assignments/{assignment_id}",
+    "operationId": "review_api_v1_employers_tasks_assignments__assignment_id__patch",
+    "roles": [
+      "employer"
+    ],
+    "summary": "Review",
+    "module": "app.api.v1.tasks"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/candidates/me/tasks",
+    "operationId": "my_tasks_api_v1_candidates_me_tasks_get",
+    "roles": [
+      "candidate"
+    ],
+    "summary": "My Tasks",
+    "module": "app.api.v1.tasks"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/candidates/me/tasks/{assignment_id}/submit",
+    "operationId": "submit_task_api_v1_candidates_me_tasks__assignment_id__submit_post",
+    "roles": [
+      "candidate"
+    ],
+    "summary": "Submit Task",
+    "module": "app.api.v1.tasks"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/tasks/generators",
+    "operationId": "generators_api_v1_admin_tasks_generators_get",
+    "roles": [
+      "admin"
+    ],
+    "summary": "Generators",
+    "module": "app.api.v1.admin"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/admin/tasks/preview",
+    "operationId": "preview_api_v1_admin_tasks_preview_post",
+    "roles": [
+      "admin"
+    ],
+    "summary": "Preview",
+    "module": "app.api.v1.admin"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/admin/tasks/validate-bank",
+    "operationId": "validate_all_api_v1_admin_tasks_validate_bank_post",
+    "roles": [
+      "admin"
+    ],
+    "summary": "Validate All",
+    "module": "app.api.v1.admin"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/knowledge/stats",
+    "operationId": "knowledge_stats_api_v1_admin_knowledge_stats_get",
+    "roles": [
+      "admin"
+    ],
+    "summary": "Knowledge Stats",
+    "module": "app.api.v1.admin"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/admin/knowledge/ingest",
+    "operationId": "knowledge_ingest_api_v1_admin_knowledge_ingest_post",
+    "roles": [
+      "admin"
+    ],
+    "summary": "Knowledge Ingest",
+    "module": "app.api.v1.admin"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/admin/tasks/drafts",
+    "operationId": "make_drafts_api_v1_admin_tasks_drafts_post",
+    "roles": [
+      "admin"
+    ],
+    "summary": "Make Drafts",
+    "module": "app.api.v1.admin"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/tasks/items",
+    "operationId": "items_api_v1_admin_tasks_items_get",
+    "roles": [
+      "admin"
+    ],
+    "summary": "Items",
+    "module": "app.api.v1.admin"
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/v1/admin/tasks/items/{item_id}",
+    "operationId": "set_item_status_api_v1_admin_tasks_items__item_id__patch",
+    "roles": [
+      "admin"
+    ],
+    "summary": "Set Item Status",
+    "module": "app.api.v1.admin"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/stats/generators",
+    "operationId": "generator_stats_api_v1_admin_stats_generators_get",
+    "roles": [
+      "admin"
+    ],
+    "summary": "Generator Stats",
+    "module": "app.api.v1.admin"
+  }
+]

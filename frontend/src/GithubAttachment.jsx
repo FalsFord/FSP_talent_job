@@ -1,0 +1,8 @@
+import React,{useState} from 'react';
+export function validRepository(value){
+ try{const url=new URL(value.trim().replace(/^(www\.)?github\.com\//,'https://github.com/'));const parts=url.pathname.replace(/^\/|\/$/g,'').split('/');return url.protocol==='https:'&&['github.com','www.github.com'].includes(url.hostname)&&!url.username&&!url.password&&!url.port&&!url.search&&!url.hash&&parts.length>=2&&parts.slice(0,2).every(p=>/^[\w.-]+$/.test(p)&&!['.','..'].includes(p))&&(parts.length===2||(parts[2]==='tree'&&parts.length>=4));}catch{return false}
+}
+export default function GithubAttachment({value,onChange}){
+ const [attached,setAttached]=useState('');
+ return <div><label className="field"><span>Репозиторий GitHub</span><input type="text" value={value} maxLength={300} onChange={e=>{setAttached('');onChange(e.target.value)}} placeholder="https://github.com/owner/repo или ссылка на ветку"/></label><div className="button-row"><button type="button" className="pill secondary" disabled={!validRepository(value)} onClick={()=>{const normalized=value.trim().replace(/^(www\.)?github\.com\//,'https://github.com/');onChange(normalized);setAttached(normalized)}}>Прикрепить репозиторий</button>{validRepository(value)&&<a href={value.trim().replace(/^(www\.)?github\.com\//,'https://github.com/')} target="_blank" rel="noreferrer">Открыть репозиторий</a>}</div>{value&&!validRepository(value)&&<p role="alert" className="muted">Укажите ссылку на репозиторий или ветку GitHub, а не на отдельный файл.</p>}{attached===value&&value&&<p className="muted" role="status">Репозиторий прикреплён. Он будет отправлен вместе с тестовым.</p>}</div>
+}
