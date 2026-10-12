@@ -7,7 +7,7 @@ import random
 
 def sub_seed(seed: int, *parts: object) -> int:
     raw = "|".join([str(seed), *[str(p) for p in parts]])
-    return int.from_bytes(hashlib.sha256(raw.encode("utf-8")).digest()[:8], "big")
+    return int.from_bytes(hashlib.sha256(raw.encode("utf-8")).digest()[:8], "big") & ((1 << 63) - 1)
 
 
 def rng_for(seed: int, *parts: object) -> random.Random:

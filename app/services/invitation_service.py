@@ -2,14 +2,13 @@
   * зарплата «от–до» в рублях обязательна; кандидат видит условия до начала общения;
   * статусы: sent → viewed → accepted/declined (кандидат), withdrawn (работодатель), expired (система);
   * контакты кандидата раскрываются только после accepted (запись в contact_reveals);
-  * защита от спама: дневной лимит (строже для новых аккаунтов) и пауза на пару «работодатель–кандидат»;
   * идемпотентное создание по заголовку Idempotency-Key."""
 from __future__ import annotations
 
 import uuid
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -22,6 +21,7 @@ from app.models.platform import ContactReveal, InvitationEvent
 from app.models.user import User
 from app.models.vacancy import Vacancy
 from app.services.notification_service import notify
+from app.services.matching_service import can_view_candidate_profile
 
 
 def _now() -> datetime:
@@ -29,7 +29,7 @@ def _now() -> datetime:
 
 
 async def create_invitation(db: AsyncSession, employer: EmployerProfile, employer_user: User, data: dict,
-                            idempotency_key: str | None) -> Invitation:
+                            idempotency_key: str | None, *, assessment_retry: bool = False) -> Invitation:
     if idempotency_key:
         existing = (await db.execute(select(Invitation).where(Invitation.employer_id == employer.id,
                                                               Invitation.idempotency_key == idempotency_key))).scalar_one_or_none()
@@ -41,25 +41,19 @@ async def create_invitation(db: AsyncSession, employer: EmployerProfile, employe
                                 "SALARY_INVALID": "Зарплата: «от» > 0 и «до» не меньше «от»",
                                 "SALARY_UNREALISTIC": "Слишком большая зарплата"}[err], 422)
     cand = await db.get(CandidateProfile, data["candidate_id"])
-    if not cand or not cand.onboarding_completed or not cand.is_discoverable:
-        raise DomainError("CANDIDATE_UNAVAILABLE", "Кандидат недоступен для приглашений", 404)
+    if not cand:
+        raise DomainError("CANDIDATE_NOT_FOUND", "Профиль соискателя не найден. Обновите список соискателей.", 404)
+    candidate_user=await db.get(User,cand.user_id)
+    if not candidate_user or not candidate_user.is_active:
+        raise DomainError('CANDIDATE_UNAVAILABLE','Соискатель удалил аккаунт',404)
+    if not await can_view_candidate_profile(db, employer.id, cand):
+        raise DomainError("CANDIDATE_UNAVAILABLE",
+                          "Нет доступа к соискателю: он ещё не откликался на ваши вакансии и не открыл профиль для поиска.", 404)
     if data.get("vacancy_id"):
         vac = await db.get(Vacancy, data["vacancy_id"])
         if not vac or vac.employer_id != employer.id:
             raise DomainError("VACANCY_NOT_FOUND", "Вакансия не найдена", 404)
     now = _now()
-    sent_24h = (await db.execute(select(func.count()).select_from(Invitation).where(
-        Invitation.employer_id == employer.id, Invitation.created_at >= now - timedelta(hours=24)))).scalar_one()
-    last = (await db.execute(select(func.max(Invitation.created_at)).where(
-        Invitation.employer_id == employer.id, Invitation.candidate_id == cand.id,
-        Invitation.status != InvitationStatus.withdrawn))).scalar_one()
-    age_days = (now - employer_user.created_at).days if employer_user.created_at else 365
-    lim = fsm.check_invite_limits(now, sent_last_24h=sent_24h, per_day=settings.invitations_per_day,
-                                  last_invite_to_candidate=last, pair_cooldown_days=settings.invitation_pair_cooldown_days,
-                                  account_age_days=age_days)
-    if lim:
-        raise DomainError(lim, "Достигнут дневной лимит приглашений" if lim == "INVITE_LIMIT"
-                          else "Этому кандидату уже отправлялось приглашение недавно", 429 if lim == "INVITE_LIMIT" else 409)
     inv = Invitation(employer_id=employer.id, candidate_id=cand.id, vacancy_id=data.get("vacancy_id"), title=data["title"],
                      message=data["message"], contact_method=data.get("contact_method"), salary_min=data["salary_min"], salary_max=data["salary_max"],
                      status=InvitationStatus.sent, idempotency_key=idempotency_key,
@@ -103,7 +97,11 @@ async def transition(db: AsyncSession, inv: Invitation, new_status: str, actor: 
     if cand and new_status in ("withdrawn", "expired"):
         await notify(db, cand.user_id, f"invitation_{new_status}",
                      "Приглашение отозвано" if new_status == "withdrawn" else "Срок приглашения истёк", inv.title,
-                     {"invitation_id": str(inv.id)})
+                     {"invitation_id": str(inv.id), "url": "/candidate/chat/"+str(inv.id)})
+    if new_status == "withdrawn":
+        from app.models.endpoint import ChatMessage
+        db.add(ChatMessage(offer_id=inv.id,sender_id=employer.user_id,
+                           text="Работодатель отозвал предложение. Отбор по этому предложению завершён."))
     await db.flush()
     return inv
 

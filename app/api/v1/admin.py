@@ -55,11 +55,22 @@ class DraftIn(BaseModel):
 class ItemStatusIn(BaseModel):
     status: str = Field(pattern="^(draft|active|retired)$")
 
+class GenerationCreditsIn(BaseModel):
+    credits:int=Field(ge=0,le=10000)
+
+@router.put('/billing/employers/{user_id}/generation-credits')
+async def generation_credits(user_id:UUID,body:GenerationCreditsIn,user:User=Depends(_admin),db:AsyncSession=Depends(get_db)):
+    target=await db.get(User,user_id)
+    if not target or target.role!=UserRole.employer:raise DomainError('NOT_FOUND','Работодатель не найден',404)
+    from app.services.generation_billing import lock_balance
+    row=await lock_balance(db,user_id)
+    row.data={**row.data,'balance_units':body.credits*10,'updated_by':str(user.id)}
+    await db.commit()
+    return {'user_id':str(user_id),'credits':body.credits}
+
 
 def get_llm():
-    if settings.llm_base_url and settings.llm_model:
-        return llm_mod.OpenAICompatLLM(settings.llm_base_url, settings.llm_api_key, settings.llm_model)
-    return llm_mod.NullLLM()
+    return llm_mod.get_llm()
 
 
 @router.get("/tasks/generators")

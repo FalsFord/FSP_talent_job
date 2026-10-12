@@ -1,0 +1,113 @@
+{
+  "common": {
+    "language": "Språk",
+    "selectLanguage": "Velg språk",
+    "save": "Lagre",
+    "cancel": "Avbryt"
+  },
+  "home": {
+    "nav": {
+      "features": "Funksjoner",
+      "openPositions": "Åpne stillinger",
+      "roadmap": "Fremdriftsplan",
+      "blog": "Blogg",
+      "github": "GitHub",
+      "dashboard": "Kontrollpanel",
+      "logIn": "Logg inn",
+      "signUp": "Registrer deg"
+    },
+    "badge": "Åpen kildekode ATS for utviklerteam",
+    "hero": {
+      "titleLine1": "Din rekruttering.",
+      "titleHighlight": "Din infrastruktur.",
+      "subtitle": "Åpen kildekode kandidatsporing bygget for team som drifter selv.",
+      "goToDashboard": "Gå til kontrollpanel",
+      "signIn": "Logg inn",
+      "createAccount": "Opprett konto",
+      "ctaDemo": "Prøv live demo",
+      "ctaStart": "Se på GitHub",
+      "hint": "Tidlig åpen kildekode-utgivelse — prøv demoen med eksempeldata, ingen registrering nødvendig"
+    },
+    "pillars": {
+      "yourData": {
+        "label": "Dine data",
+        "desc": "Postgres + MinIO på din infrastruktur. Ingenting forlater nettverket ditt."
+      },
+      "auditable": {
+        "label": "Fullt reviderbar",
+        "desc": "Åpen kildekode — hver linje med matchingslogikk er synlig og kan overstyres."
+      },
+      "unlimitedSeats": {
+        "label": "Ubegrensede plasser",
+        "desc": "Legg til hele rekrutteringsteamet ditt. Ingen pris per bruker, noensinne."
+      }
+    },
+    "footer": {
+      "source": "Kildekode",
+      "tagline": "Reqcore — åpen kildekode kandidatsporing"
+    }
+  },
+  "retention": {
+    "title": "Personvern og datalagring",
+    "description": "Konfigurer personverninformasjon og fjern kandidatdata automatisk etter lagringsperioden.",
+    "policy": {
+      "title": "Lagringspolicy",
+      "description": "Beregnes fra kandidatens siste aktivitet i rekrutteringsprosessen.",
+      "enable": "Aktiver automatisk datalagring",
+      "enableHelp": "Utløpte kandidater settes i karantene før permanent sletting. Eksisterende data får først en gjennomgangsperiode.",
+      "months": "Lagringsperiode (måneder)",
+      "quarantineDays": "Karanteneperiode (dager)",
+      "quarantineHelp": "Gjenopprettbar frist før permanent sletting."
+    },
+    "privacy": {
+      "title": "Personverninformasjon i søknadsskjemaet",
+      "description": "Vises til søkere i det offentlige søknadsskjemaet.",
+      "url": "URL til personvernerklæring",
+      "email": "E-post for personvernhenvendelser",
+      "text": "Informasjonstekst (valgfritt)",
+      "defaultNotice": "Ved å søke godtar du at {organization} behandler søknadsdataene dine for å vurdere kandidaturet ditt. Dataene lagres bare så lenge det er nødvendig, og slettes deretter.",
+      "thisOrganization": "denne organisasjonen",
+      "policyLink": "Personvernerklæring",
+      "contactLabel": "Kontakt"
+    },
+    "save": {
+      "button": "Lagre endringer",
+      "saving": "Lagrer…",
+      "saved": "Lagret!",
+      "permission": "Bare administratorer og eiere kan endre disse innstillingene."
+    },
+    "review": {
+      "title": "Kommende slettinger",
+      "description": "Kandidater som snart utløper, er i karantene eller er unntatt.",
+      "instanceDisabled": "Automatisk opprydding er satt på pause av systemadministratoren. Policyer og gjennomgangsdata er uendret.",
+      "loading": "Laster…",
+      "empty": "Ingenting å gjennomgå. Ingen kandidater nærmer seg lagringsgrensen.",
+      "expires": "Utløper {date}",
+      "erases": "Slettes {date}",
+      "exemptUntil": "Unntatt til {date}"
+    },
+    "status": {
+      "expiring": "Utløper snart",
+      "expired": "Utløpt",
+      "quarantined": "I karantene",
+      "exempt": "Unntatt"
+    },
+    "actions": {
+      "export": "Eksporter data",
+      "restore": "Gjenopprett",
+      "hold": "Legg til juridisk sperre",
+      "clearHold": "Fjern juridisk sperre",
+      "erase": "Slett nå",
+      "holdPrompt": "Begrunnelse for juridisk sperre (for eksempel en pågående tvist):",
+      "eraseConfirm": "Dette sletter {name} og alle tilhørende data permanent, og kan ikke angres. Skriv kandidatens fulle navn for å bekrefte:"
+    },
+    "errors": {
+      "save": "Kunne ikke lagre innstillingene",
+      "restore": "Kunne ikke gjenopprette kandidaten",
+      "hold": "Kunne ikke legge til juridisk sperre",
+      "clearHold": "Kunne ikke fjerne juridisk sperre",
+      "erase": "Kunne ikke slette kandidaten",
+      "eraseNameMismatch": "Navnet stemte ikke. Kandidaten ble ikke slettet."
+    }
+  }
+}

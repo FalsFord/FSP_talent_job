@@ -1,0 +1,113 @@
+{
+  "common": {
+    "language": "Language",
+    "selectLanguage": "Select language",
+    "save": "Save",
+    "cancel": "Cancel"
+  },
+  "home": {
+    "nav": {
+      "features": "Features",
+      "openPositions": "Open Positions",
+      "roadmap": "Roadmap",
+      "blog": "Blog",
+      "github": "GitHub",
+      "dashboard": "Dashboard",
+      "logIn": "Log in",
+      "signUp": "Sign up"
+    },
+    "badge": "Open Source ATS for Developer Teams",
+    "hero": {
+      "titleLine1": "Your hiring.",
+      "titleHighlight": "Your infrastructure.",
+      "subtitle": "Open-source applicant tracking built for teams that self-host.",
+      "goToDashboard": "Go to Dashboard",
+      "signIn": "Sign in",
+      "createAccount": "Create account",
+      "ctaDemo": "Try live demo",
+      "ctaStart": "View on GitHub",
+      "hint": "Early open-source release — try the demo with sample data, no sign-up needed"
+    },
+    "pillars": {
+      "yourData": {
+        "label": "Your data",
+        "desc": "Postgres + MinIO on your infrastructure. Nothing leaves your network."
+      },
+      "auditable": {
+        "label": "Fully auditable",
+        "desc": "Open source — every line of matching logic is visible and overridable."
+      },
+      "unlimitedSeats": {
+        "label": "Unlimited seats",
+        "desc": "Add your whole hiring team. No per-seat pricing, ever."
+      }
+    },
+    "footer": {
+      "source": "Source",
+      "tagline": "Reqcore — open-source applicant tracking"
+    }
+  },
+  "retention": {
+    "title": "Privacy & Retention",
+    "description": "Configure privacy notices and automatically remove candidate data after your retention period.",
+    "policy": {
+      "title": "Retention policy",
+      "description": "Measured from the candidate's latest recruitment activity.",
+      "enable": "Enable automated retention",
+      "enableHelp": "Expired candidates are quarantined before permanent erasure. Existing data receives a review window first.",
+      "months": "Retention period (months)",
+      "quarantineDays": "Quarantine window (days)",
+      "quarantineHelp": "Recoverable grace period before permanent erasure."
+    },
+    "privacy": {
+      "title": "Application-form privacy notice",
+      "description": "Shown to applicants on your public job application form.",
+      "url": "Privacy policy URL",
+      "email": "Privacy contact email",
+      "text": "Notice text (optional)",
+      "defaultNotice": "By applying, you agree that {organization} may process your application data to evaluate your candidacy. Your data is retained only as long as necessary and then deleted.",
+      "thisOrganization": "this organization",
+      "policyLink": "Privacy policy",
+      "contactLabel": "Contact"
+    },
+    "save": {
+      "button": "Save changes",
+      "saving": "Saving…",
+      "saved": "Saved!",
+      "permission": "Only admins and owners can change these settings."
+    },
+    "review": {
+      "title": "Upcoming deletions",
+      "description": "Candidates expiring, in quarantine, or exempt from retention.",
+      "instanceDisabled": "Automated cleanup is paused by the instance administrator. Policies and review data remain unchanged.",
+      "loading": "Loading…",
+      "empty": "Nothing to review. No candidates are nearing their retention limit.",
+      "expires": "Expires {date}",
+      "erases": "Erases {date}",
+      "exemptUntil": "Exempt until {date}"
+    },
+    "status": {
+      "expiring": "Expiring",
+      "expired": "Expired",
+      "quarantined": "Quarantined",
+      "exempt": "Exempt"
+    },
+    "actions": {
+      "export": "Export data",
+      "restore": "Restore",
+      "hold": "Add legal hold",
+      "clearHold": "Clear legal hold",
+      "erase": "Erase now",
+      "holdPrompt": "Reason for the legal hold (for example, an active dispute):",
+      "eraseConfirm": "This permanently erases {name} and all their data, and cannot be undone. Type the candidate's full name to confirm:"
+    },
+    "errors": {
+      "save": "Failed to save settings",
+      "restore": "Failed to restore candidate",
+      "hold": "Failed to add legal hold",
+      "clearHold": "Failed to clear legal hold",
+      "erase": "Failed to erase candidate",
+      "eraseNameMismatch": "The name didn't match. The candidate was not erased."
+    }
+  }
+}

@@ -2,7 +2,8 @@ from datetime import datetime, timezone
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
+from sqlalchemy import select, func
+from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import get_db, require_roles
@@ -44,25 +45,22 @@ async def update_my_profile(
         if val is not None:
             setattr(profile, field, val)
     if body.skills is not None:
-        existing = await db.execute(select(CandidateSkill).where(CandidateSkill.candidate_id == profile.id))
-        for cs in existing.scalars().all():
-            await db.delete(cs)
-        for name in body.skills:
-            slug = name.lower().strip()
-            res = await db.execute(select(Skill).where(Skill.slug == slug))
-            skill = res.scalar_one_or_none()
+        names = {name.strip().lower(): name.strip() for name in body.skills if name.strip()}
+        existing = (await db.execute(select(CandidateSkill).where(CandidateSkill.candidate_id == profile.id)
+                    .options(selectinload(CandidateSkill.skill)))).scalars().all()
+        retained = set()
+        for cs in existing:
+            key = cs.skill.name.strip().lower()
+            if key not in names: await db.delete(cs)
+            else: retained.add(key)
+        for key, name in names.items():
+            if key in retained: continue
+            skill = (await db.execute(select(Skill).where(func.lower(Skill.name) == key))).scalar_one_or_none()
             if not skill:
-                skill = Skill(name=name, slug=slug)
-                db.add(skill)
-                await db.flush()
-            db.add(
-                CandidateSkill(
-                    candidate_id=profile.id,
-                    skill_id=skill.id,
-                    source=SkillSource.self_declared,
-                    status=SkillStatus.claimed,
-                )
-            )
+                skill = Skill(name=name, slug=key)
+                db.add(skill); await db.flush()
+            db.add(CandidateSkill(candidate_id=profile.id, skill_id=skill.id,
+                                  source=SkillSource.self_declared, status=SkillStatus.claimed))
     await refresh_candidate_search_index(db, profile)
     await db.commit()
     await db.refresh(profile)

@@ -1,0 +1,21 @@
+# Dependencies (reinstalled during build)
+node_modules/
+
+# Build artifacts (generated during build)
+.nuxt/
+.output/
+
+# Git history
+.git/
+.gitignore
+
+# Local env — never bake secrets into the image
+.env
+.env.*
+!.env.example
+
+# Editor and OS artifacts
+.DS_Store
+*.log
+.vscode/
+.idea/

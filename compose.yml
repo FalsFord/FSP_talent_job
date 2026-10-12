@@ -1,0 +1,170 @@
+name: endpoint-fsp
+services:
+  git-eval:
+    build: ./git-eval
+    environment:
+      GITEVAL_API_KEY: ${GITEVAL_API_KEY}
+      GITEVAL_WEBHOOK_SECRET: ${GITEVAL_WEBHOOK_SECRET}
+      GITEVAL_ALLOWED_HOSTS: github.com
+      GITEVAL_CALLBACK_PREFIXES: http://api:8000/api/v1/internal/git-eval/callback
+      GITEVAL_WORKERS: "1"
+      GITEVAL_MAX_REPO_MB: "100"
+      GITEVAL_SANDBOX_ENABLED: "0"
+    volumes:
+      - git-eval-data:/data
+    mem_limit: 512m
+    cpus: 1.0
+    pids_limit: 128
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: ["ALL"]
+    restart: unless-stopped
+  db:
+    image: endpoint-fsp-postgres:17
+    build:
+      context: .
+      dockerfile: Dockerfile.postgres
+    environment:
+      POSTGRES_USER: fsp
+      POSTGRES_DB: fsp
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Run setup.ps1}
+    volumes:
+      - fsp-db:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5440:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fsp -d fsp"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - fsp-chat:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+  api:
+    build: .
+    env_file: .env
+    environment:
+      BILLING_DEMO_ENABLED: "true"
+      DATABASE_URL: postgresql+asyncpg://fsp:${POSTGRES_PASSWORD}@db:5432/fsp
+      REDIS_URL: redis://redis:6379/0
+      UPLOAD_DIR: /app/uploads
+      JUDGE0_URL: http://host.docker.internal:2358
+      KNOWLEDGE_DIR: /knowledge
+      GIT_EVAL_URL: http://git-eval:9000
+      GIT_EVAL_KEY: ${GITEVAL_API_KEY}
+      GIT_EVAL_WEBHOOK_SECRET: ${GITEVAL_WEBHOOK_SECRET}
+      GIT_EVAL_CALLBACK_BASE: http://api:8000
+      ATS_SERVICE_URL: http://ats:8011
+      ATS_SERVICE_TOKEN: ${ATS_SERVICE_TOKEN:?Run ats-service/setup.ps1}
+    ports:
+      - "127.0.0.1:${API_PORT:-8000}:8000"
+    volumes:
+      - endpoint-uploads:/app/uploads
+      - ./data:/data:ro
+      - ./data/full_data:/knowledge:ro
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      ats:
+        condition: service_healthy
+    restart: unless-stopped
+    init: true
+  ats:
+    build: ./ats-service
+    environment:
+      ATS_SERVICE_TOKEN: ${ATS_SERVICE_TOKEN:?Run ats-service/setup.ps1}
+      REQCORE_URL: http://reqcore:3000
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8011/health')"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+  reqcore-db:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: reqcore
+      POSTGRES_DB: reqcore
+      POSTGRES_PASSWORD: ${REQCORE_DB_PASSWORD:?Run ats-service/setup.ps1}
+    volumes:
+      - reqcore-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U reqcore -d reqcore"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+  reqcore-storage:
+    profiles: [reqcore-documents]
+    image: quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z
+    command: server /data
+    environment:
+      MINIO_ROOT_USER: reqcore
+      MINIO_ROOT_PASSWORD: ${REQCORE_STORAGE_PASSWORD:?Run ats-service/setup.ps1}
+    volumes:
+      - reqcore-storage:/data
+    restart: unless-stopped
+  ollama:
+    profiles: [local-llm]
+    image: ollama/ollama:0.11.10
+    environment:
+      OLLAMA_KEEP_ALIVE: 5m
+      OLLAMA_NUM_PARALLEL: 1
+      OLLAMA_CONTEXT_LENGTH: 8192
+      OLLAMA_FLASH_ATTENTION: "1"
+      OLLAMA_KV_CACHE_TYPE: q8_0
+    volumes:
+      - ollama-models:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    restart: unless-stopped
+  reqcore:
+    build:
+      context: ./reqcore
+    environment:
+      ATS_SERVICE_TOKEN: ${ATS_SERVICE_TOKEN}
+      REQCORE_AI_PROVIDER: openai_compatible
+      REQCORE_AI_MODEL: ${GIGACHAT_MODEL:-GigaChat}
+      REQCORE_AI_BASE_URL: http://api:8000/api/internal/ats-ai/v1
+      REQCORE_AI_API_KEY: ${ATS_SERVICE_TOKEN}
+      DATABASE_URL: postgresql://reqcore:${REQCORE_DB_PASSWORD}@reqcore-db:5432/reqcore
+      BETTER_AUTH_SECRET: ${REQCORE_AUTH_SECRET}
+      BETTER_AUTH_URL: http://reqcore:3000
+      S3_ENDPOINT: http://reqcore-storage:9000
+      S3_ACCESS_KEY: reqcore
+      S3_SECRET_KEY: ${REQCORE_STORAGE_PASSWORD}
+      S3_BUCKET: reqcore
+      S3_REGION: us-east-1
+      S3_FORCE_PATH_STYLE: "false"
+      GDPR_CLEANUP_ENABLED: "false"
+      POSTHOG_PUBLIC_KEY: ""
+      POSTHOG_FEATURE_FLAGS_KEY: ""
+    depends_on:
+      reqcore-db:
+        condition: service_healthy
+    restart: unless-stopped
+    init: true
+volumes:
+  git-eval-data:
+  fsp-db:
+  fsp-chat:
+  endpoint-uploads:
+    name: endpoint_endpoint-uploads
+  reqcore-db:
+  reqcore-storage:
+  ollama-models:

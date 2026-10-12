@@ -1,0 +1,21 @@
+# Добавьте в docker-compose.yml основного бэкенда.
+services:
+  git-eval:
+    build: ./git-eval
+    restart: unless-stopped
+    env_file: ./git-eval/.env
+    volumes:
+      - geval_data:/data
+    # наружу порт НЕ публикуем: сервис доступен только из внутренней сети compose
+    expose: ["9000"]
+
+  api:
+    # ... существующее описание ...
+    environment:
+      GIT_EVAL_URL: http://git-eval:9000
+      GIT_EVAL_KEY: ${GITEVAL_API_KEY}
+      GIT_EVAL_WEBHOOK_SECRET: ${GITEVAL_WEBHOOK_SECRET}
+      GIT_EVAL_CALLBACK_BASE: http://api:8000
+
+volumes:
+  geval_data:

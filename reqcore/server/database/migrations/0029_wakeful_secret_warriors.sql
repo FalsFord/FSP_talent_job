@@ -1,0 +1,1 @@
+ALTER TABLE "job" ADD COLUMN "phone_requirement" text DEFAULT 'optional' NOT NULL;

@@ -60,12 +60,28 @@ async def revealed_candidate_ids(db: AsyncSession, employer_id: uuid.UUID) -> se
 
 async def contacts_for(db: AsyncSession, employer_id: uuid.UUID, c: CandidateProfile) -> dict | None:
     """Контакты кандидата. Единственный источник права — таблица contact_reveals."""
+    if not (c.privacy or {}).get("show_contacts_after_accept", True):
+        return None
     res = await db.execute(select(ContactReveal.id).where(ContactReveal.employer_id == employer_id,
                                                           ContactReveal.candidate_id == c.id))
     if res.first() is None:
         return None
     user = await db.get(User, c.user_id)
     return {"email": user.email if user else None, "phone": c.phone}
+
+
+async def can_view_candidate_profile(db: AsyncSession, employer_id: uuid.UUID, c: CandidateProfile) -> bool:
+    if c.is_discoverable and c.onboarding_completed:
+        return True
+    from app.models.vacancy import Application, Vacancy
+    application = await db.scalar(select(Application.id).join(Vacancy, Vacancy.id == Application.vacancy_id)
+                                  .where(Application.candidate_id == c.id, Vacancy.employer_id == employer_id).limit(1))
+    if application:
+        return True
+    from app.models.invitation import Invitation
+    invitation = await db.scalar(select(Invitation.id).where(Invitation.candidate_id == c.id,
+                                                            Invitation.employer_id == employer_id).limit(1))
+    return invitation is not None
 
 
 def _skill_map(c: CandidateProfile, now: datetime) -> dict[str, str]:

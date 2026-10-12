@@ -1,0 +1,10 @@
+import React,{useEffect,useState} from 'react';
+import {native} from './fspApi';
+export default function KnowledgeAdmin() {
+  const [stats,setStats]=useState(null),[items,setItems]=useState([]),[error,setError]=useState(''),[busy,setBusy]=useState(false),[message,setMessage]=useState('');
+  async function load() {try {const [s,i]=await Promise.all([native('/admin/knowledge/stats'),native('/admin/tasks/items')]);setStats(s);setItems(i);}catch(e){setError(e.message);}}
+  useEffect(()=>{load();},[]);
+  async function ingest() {setBusy(true);setError('');try {const result=await native('/admin/knowledge/ingest','POST',{});setMessage(`Добавлено: ${result.corpus?.created||0}, обновлено: ${result.corpus?.updated||0}.`);await load();}catch(e){setError(e.message);}finally{setBusy(false);}}
+  async function change(item,status) {try {await native('/admin/tasks/items/'+item.id,'PATCH',{status});await load();}catch(e){setError(e.message);}}
+  return <><div className="page-title"><div><span className="mono accent-text">МАТЕРИАЛЫ ПЛАТФОРМЫ</span><h1>База знаний и вопросы</h1></div></div>{error&&<p role="alert">{error}</p>}<section className="card fsp-card"><h2>База знаний</h2><p>{stats?.documents_by_source?.full_data||0} документов корпуса · {stats?.chunks||0} фрагментов поиска</p><p className="muted">Обновление читает подключённый очищенный корпус и сохраняет изменившиеся материалы.</p><button className="pill primary" disabled={busy} onClick={ingest}>{busy?'Обновляем…':'Обновить материалы'}</button>{message&&<p role="status">{message}</p>}</section><section className="card fsp-card"><h2>Банк вопросов</h2>{items.map(item=><article key={item.id} className="fsp-row"><div><span className="mono muted">{item.language} · {item.grade}</span><p>{item.statement}</p><p className="muted">{item.status==='active'?'Опубликован':item.status==='draft'?'Черновик':'Снят с публикации'}</p></div><button className="pill secondary" onClick={()=>change(item,item.status==='active'?'retired':'active')}>{item.status==='active'?'Снять с публикации':'Опубликовать'}</button></article>)}</section></>;
+}

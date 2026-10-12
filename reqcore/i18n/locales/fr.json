@@ -1,0 +1,113 @@
+{
+  "common": {
+    "language": "Langue",
+    "selectLanguage": "Sélectionner la langue",
+    "save": "Enregistrer",
+    "cancel": "Annuler"
+  },
+  "home": {
+    "nav": {
+      "features": "Fonctionnalités",
+      "openPositions": "Postes ouverts",
+      "roadmap": "Feuille de route",
+      "blog": "Blog",
+      "github": "GitHub",
+      "dashboard": "Tableau de bord",
+      "logIn": "Se connecter",
+      "signUp": "S'inscrire"
+    },
+    "badge": "ATS Open Source pour les équipes de développeurs",
+    "hero": {
+      "titleLine1": "Votre recrutement.",
+      "titleHighlight": "Votre infrastructure.",
+      "subtitle": "Suivi de candidatures open source conçu pour les équipes qui auto-hébergent.",
+      "goToDashboard": "Aller au tableau de bord",
+      "signIn": "Se connecter",
+      "createAccount": "Créer un compte",
+      "ctaDemo": "Essayer la démo",
+      "ctaStart": "Voir sur GitHub",
+      "hint": "Version open source précoce — essayez la démo avec des données d'exemple, sans inscription"
+    },
+    "pillars": {
+      "yourData": {
+        "label": "Vos données",
+        "desc": "Postgres + MinIO sur votre infrastructure. Rien ne quitte votre réseau."
+      },
+      "auditable": {
+        "label": "Entièrement auditable",
+        "desc": "Open source — chaque ligne de logique de matching est visible et modifiable."
+      },
+      "unlimitedSeats": {
+        "label": "Utilisateurs illimités",
+        "desc": "Ajoutez toute votre équipe de recrutement. Pas de tarification par siège, jamais."
+      }
+    },
+    "footer": {
+      "source": "Code source",
+      "tagline": "Reqcore — suivi de candidatures open source"
+    }
+  },
+  "retention": {
+    "title": "Confidentialité et conservation",
+    "description": "Configurez les avis de confidentialité et supprimez automatiquement les données des candidats après la durée de conservation.",
+    "policy": {
+      "title": "Politique de conservation",
+      "description": "Calculée depuis la dernière activité du processus de recrutement.",
+      "enable": "Activer la conservation automatisée",
+      "enableHelp": "Les candidats arrivés à échéance sont mis en quarantaine avant l'effacement définitif. Les données existantes bénéficient d'abord d'une période de contrôle.",
+      "months": "Durée de conservation (mois)",
+      "quarantineDays": "Période de quarantaine (jours)",
+      "quarantineHelp": "Délai récupérable avant l'effacement définitif."
+    },
+    "privacy": {
+      "title": "Avis de confidentialité du formulaire",
+      "description": "Affiché aux candidats sur le formulaire de candidature public.",
+      "url": "URL de la politique de confidentialité",
+      "email": "E-mail du contact confidentialité",
+      "text": "Texte de l'avis (facultatif)",
+      "defaultNotice": "En postulant, vous acceptez que {organization} traite vos données de candidature afin d'évaluer votre profil. Vos données ne sont conservées que le temps nécessaire, puis supprimées.",
+      "thisOrganization": "cette organisation",
+      "policyLink": "Politique de confidentialité",
+      "contactLabel": "Contact"
+    },
+    "save": {
+      "button": "Enregistrer",
+      "saving": "Enregistrement…",
+      "saved": "Enregistré !",
+      "permission": "Seuls les administrateurs et propriétaires peuvent modifier ces paramètres."
+    },
+    "review": {
+      "title": "Suppressions à venir",
+      "description": "Candidats arrivant à échéance, en quarantaine ou exemptés.",
+      "instanceDisabled": "Le nettoyage automatique est suspendu par l'administrateur de l'instance. Les politiques et les données de contrôle restent inchangées.",
+      "loading": "Chargement…",
+      "empty": "Rien à vérifier. Aucun candidat n'approche de sa limite de conservation.",
+      "expires": "Expire le {date}",
+      "erases": "Effacement le {date}",
+      "exemptUntil": "Exempté jusqu'au {date}"
+    },
+    "status": {
+      "expiring": "Bientôt expiré",
+      "expired": "Expiré",
+      "quarantined": "En quarantaine",
+      "exempt": "Exempté"
+    },
+    "actions": {
+      "export": "Exporter les données",
+      "restore": "Restaurer",
+      "hold": "Ajouter un gel juridique",
+      "clearHold": "Lever le gel juridique",
+      "erase": "Effacer maintenant",
+      "holdPrompt": "Motif du gel juridique (par exemple, un litige en cours) :",
+      "eraseConfirm": "Cette action efface définitivement {name} et toutes ses données, et est irréversible. Saisissez le nom complet du candidat pour confirmer :"
+    },
+    "errors": {
+      "save": "Impossible d'enregistrer les paramètres",
+      "restore": "Impossible de restaurer le candidat",
+      "hold": "Impossible d'ajouter le gel juridique",
+      "clearHold": "Impossible de lever le gel juridique",
+      "erase": "Impossible d'effacer le candidat",
+      "eraseNameMismatch": "Le nom ne correspond pas. Le candidat n'a pas été effacé."
+    }
+  }
+}

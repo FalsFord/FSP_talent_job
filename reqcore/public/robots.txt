@@ -1,0 +1,9 @@
+User-Agent: *
+Allow: /jobs
+Allow: /jobs/
+Disallow: /dashboard/
+Disallow: /auth/
+Disallow: /onboarding/
+Disallow: /join/
+Disallow: /api/
+Disallow: /ingest/

@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import SecretStr
 
 
 class Settings(BaseSettings):
@@ -29,10 +30,17 @@ class Settings(BaseSettings):
     llm_base_url: str = ""                   # OpenAI-совместимый endpoint (необязательно; только для черновиков заданий)
     llm_api_key: str = ""
     llm_model: str = ""
+    llm_provider: str = "templates"
+    gigachat_client_id: str = ""
+    gigachat_client_secret: SecretStr = SecretStr("")
+    gigachat_authorization_key: SecretStr = SecretStr("")
+    gigachat_scope: str = "GIGACHAT_API_PERS"
+    gigachat_model: str = "GigaChat"
+    gigachat_base_url: str = "https://api.giga.chat/v1"
+    gigachat_oauth_url: str = "https://ngw.devices.sberbank.ru:9443/api/v2/oauth"
+    gigachat_ca_bundle: str = ""
 
     # --- приглашения ---
-    invitations_per_day: int = 20
-    invitation_pair_cooldown_days: int = 30
     invitation_ttl_days: int = 14
 
     # --- регистрация / почта ---
@@ -46,6 +54,12 @@ class Settings(BaseSettings):
     mail_from: str = "no-reply@fsp-talent.local"
 
     background_jobs_enabled: bool = True
+    git_eval_url: str = ""
+    git_eval_key: str = ""
+    git_eval_webhook_secret: str = ""
+    git_eval_callback_base: str = "http://api:8000"
+    ats_service_url: str = "http://ats:8011"
+    ats_service_token: SecretStr = SecretStr("")
 
     @property
     def cors_origin_list(self) -> list[str]:

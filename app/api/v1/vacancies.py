@@ -2,7 +2,7 @@
 from datetime import datetime, timezone
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, BackgroundTasks
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,8 +19,37 @@ from app.models.user import User, UserRole
 from app.models.vacancy import Application, ApplicationStatus, Vacancy
 from app.services.matching_service import contacts_for, display_name
 from app.services.notification_service import notify
+from app.services import ats_service as ats
 
 router = APIRouter(prefix="/vacancies", tags=["vacancies"])
+
+async def application_conversation(db,ep,user,a,v):
+    from app.models.invitation import Invitation,InvitationStatus
+    from app.services.invitation_service import create_invitation
+    await db.refresh(a,with_for_update=True)
+    if a.status!=ApplicationStatus.accepted:
+        raise DomainError('INVALID_TRANSITION','Сначала примите отклик',409)
+    key='application-offer:'+str(a.id)
+    saved=await ats.read_state(db,user.id,key) or {}
+    inv=await db.get(Invitation,UUID(saved['offer_id'])) if saved.get('offer_id') else None
+    if not inv:
+        inv=(await db.execute(select(Invitation).where(Invitation.employer_id==ep.id,Invitation.candidate_id==a.candidate_id,Invitation.vacancy_id==v.id,Invitation.status.in_([InvitationStatus.sent,InvitationStatus.viewed,InvitationStatus.accepted])).order_by(Invitation.created_at.desc()))).scalars().first()
+    if not inv:
+        inv=await create_invitation(db,ep,user,{'candidate_id':a.candidate_id,'vacancy_id':v.id,'title':v.title,'message':'Ваш отклик принят. Обсудим следующий этап отбора.','salary_min':v.salary_min,'salary_max':v.salary_max},None,assessment_retry=True)
+        from app.models.endpoint import ChatMessage
+        db.add(ChatMessage(offer_id=inv.id,sender_id=user.id,text='Ваш отклик на вакансию «'+v.title+'» принят. Здесь обсудим следующие этапы отбора.'))
+    await ats.put_state(db,user.id,key,{'offer_id':str(inv.id)})
+    return inv
+
+@router.post('/applications/{application_id}/conversation')
+async def open_application_conversation(application_id:UUID,user:User=Depends(require_roles(UserRole.employer)),db:AsyncSession=Depends(get_db)):
+    ep=await employer_profile(db,user.id)
+    a=await db.get(Application,application_id)
+    v=await db.get(Vacancy,a.vacancy_id) if a else None
+    if not v or v.employer_id!=ep.id: raise DomainError('NOT_FOUND','Отклик не найден',404)
+    inv=await application_conversation(db,ep,user,a,v)
+    await db.commit()
+    return {'offer_id':str(inv.id)}
 
 
 class VacancyCreate(BaseModel):
@@ -63,7 +92,12 @@ async def list_vacancies(db: AsyncSession = Depends(get_db)):
     rows = (await db.execute(select(Vacancy, Company.name).join(EmployerProfile, EmployerProfile.id == Vacancy.employer_id)
                              .join(Company, Company.id == EmployerProfile.company_id).where(Vacancy.is_active == True)  # noqa: E712
                              .order_by(Vacancy.created_at.desc()))).all()
-    return [_vac_out(v, name) for v, name in rows]
+    output=[]
+    for v,name in rows:
+        ep=await db.get(EmployerProfile,v.employer_id)
+        company=await ats.read_state(db,ep.user_id,'company') or {}
+        output.append({**_vac_out(v,name),'logo':'/api/files/'+company['logo_file_id'] if company.get('logo_file_id') else None})
+    return output
 
 
 @router.get("/mine")
@@ -131,7 +165,7 @@ async def close_vacancy(vacancy_id: UUID, user: User = Depends(require_roles(Use
 
 
 @router.post("/{vacancy_id}/apply", status_code=201)
-async def apply_vacancy(vacancy_id: UUID, body: ApplyIn | None = None, user: User = Depends(require_roles(UserRole.candidate)),
+async def apply_vacancy(vacancy_id: UUID, tasks: BackgroundTasks, body: ApplyIn | None = None, user: User = Depends(require_roles(UserRole.candidate)),
                         db: AsyncSession = Depends(get_db)):
     """Отклик кандидата. По ТЗ контакты кандидата раскрываются работодателю, когда кандидат «откликнулся сам»."""
     profile = await candidate_profile(db, user.id)
@@ -142,6 +176,8 @@ async def apply_vacancy(vacancy_id: UUID, body: ApplyIn | None = None, user: Use
                                                          Application.candidate_id == profile.id))).first()
     if dup:
         raise DomainError("ALREADY_APPLIED", "Вы уже откликались на эту вакансию", 409)
+    from app.services.onboarding_service import require_completed_registration
+    await require_completed_registration(db, profile)
     app = Application(vacancy_id=vacancy_id, candidate_id=profile.id, status=ApplicationStatus.submitted,
                       cover_letter=body.cover_letter if body else None)
     db.add(app)
@@ -153,41 +189,61 @@ async def apply_vacancy(vacancy_id: UUID, body: ApplyIn | None = None, user: Use
     ep = await db.get(EmployerProfile, vacancy.employer_id)
     if ep:
         await notify(db, ep.user_id, "application_received", "Новый отклик", vacancy.title, {"application_id": str(app.id)})
+        await ats.put_state(db, ep.user_id, 'ats:application:' + str(app.id), {'state': 'pending', 'category': 'review', 'summary': 'Оценка выполняется'})
     await db.commit()
+    tasks.add_task(ats.evaluate_application, app.id)
     return {"id": app.id, "status": app.status.value}
 
 
 @router.get("/{vacancy_id}/applications")
-async def vacancy_applications(vacancy_id: UUID, user: User = Depends(require_roles(UserRole.employer)),
+async def vacancy_applications(vacancy_id: UUID, tasks: BackgroundTasks, user: User = Depends(require_roles(UserRole.employer)),
                                db: AsyncSession = Depends(get_db)):
     ep = await employer_profile(db, user.id)
     v = await _own_vacancy(db, ep, vacancy_id)
     rows = (await db.execute(select(Application, CandidateProfile).join(CandidateProfile, CandidateProfile.id == Application.candidate_id)
                              .where(Application.vacancy_id == v.id).order_by(Application.created_at.desc()))).all()
     out = []
+    queue = []
+    signature = await ats.configuration_signature(db, v, ep)
     for a, c in rows:
+        from app.models.invitation import Invitation
+        conversation=await ats.read_state(db,user.id,'application-offer:'+str(a.id)) or {}
+        inv=await db.get(Invitation,UUID(conversation['offer_id'])) if conversation.get('offer_id') else None
+        report = await ats.read_state(db, ep.user_id, 'ats:application:' + str(a.id))
+        if not report or (report.get('state') == 'ready' and report.get('configuration_signature') != signature):
+            report = {'state': 'pending', 'category': 'review', 'summary': 'Оценка выполняется'}
+            await ats.put_state(db, ep.user_id, 'ats:application:' + str(a.id), report)
+            queue.append(a.id)
         out.append({"id": a.id, "candidate_id": c.id, "display_name": display_name(c, True), "status": a.status.value,
                     "cover_letter": a.cover_letter, "profile_strength": c.profile_strength, "created_at": a.created_at,
-                    "contacts": await contacts_for(db, ep.id, c)})
+                    "contacts": await contacts_for(db, ep.id, c), "ats_report": report,
+                    "offer_id":str(inv.id) if inv else None,"offer_status":inv.status.value if inv else None,
+                    "hiring_stage":await ats.read_state(db,user.id,'hiring-stage:'+str(inv.id)) if inv else {}})
+    await db.commit()
+    if queue:
+        tasks.add_task(ats.evaluate_many, queue)
     return out
 
 
 @router.patch("/applications/{application_id}")
-async def update_application(application_id: UUID, body: ApplicationStatusIn,
+async def update_application(application_id: UUID, body: ApplicationStatusIn, tasks: BackgroundTasks,
                              user: User = Depends(require_roles(UserRole.employer)), db: AsyncSession = Depends(get_db)):
     ep = await employer_profile(db, user.id)
     a = await db.get(Application, application_id)
     v = await db.get(Vacancy, a.vacancy_id) if a else None
     if not a or not v or v.employer_id != ep.id:
         raise DomainError("NOT_FOUND", "Application not found", 404)
+    await db.refresh(a,with_for_update=True)
     if a.status.value == body.status:
         return {"id": a.id, "status": a.status.value}
     if body.status not in _APP_NEXT.get(a.status.value, set()):
         raise DomainError("INVALID_TRANSITION", f"Переход «{a.status.value}» → «{body.status}» недопустим", 409)
     a.status, a.updated_at = ApplicationStatus(body.status), datetime.now(timezone.utc)
+    await db.flush()
+    inv=await application_conversation(db,ep,user,a,v) if body.status=='accepted' else None
     c = await db.get(CandidateProfile, a.candidate_id)
     if c:
-        await notify(db, c.user_id, "application_status", "Статус отклика изменён", f"{v.title}: {body.status}",
-                     {"application_id": str(a.id), "status": body.status})
+        await notify(db, c.user_id, "application_status", "Отклик принят" if inv else "Статус отклика изменён", f"{v.title}: "+{'accepted':'приглашаем продолжить отбор','viewed':'просмотрен','rejected':'отказ'}[body.status],
+                     {"application_id": str(a.id), "status": body.status,"url":'/candidate/chat/'+str(inv.id) if inv else '/candidate/applications'})
     await db.commit()
     return {"id": a.id, "status": a.status.value}

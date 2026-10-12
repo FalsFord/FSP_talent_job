@@ -1,0 +1,241 @@
+{
+  "suitable": {
+    "category": "suitable",
+    "score": 100,
+    "coverage": 100,
+    "criteria": [
+      {
+        "key": "grade",
+        "label": "Грейд",
+        "requirement": "Минимальный грейд middle. Различай подтверждённый и заявленный грейд; неизвестный грейд требует уточнения.",
+        "status": "match",
+        "ratio": 1.0,
+        "weight": 25,
+        "confidence": 100,
+        "evidence": "Грейд указан как 'middle' и подтверждён как 'grade_verified': true. Это подтверждённый грейд, соответствует требуемому.",
+        "strengths": [
+          "Грейд 'middle' подтверждён в резюме и помечен как verified"
+        ],
+        "gaps": []
+      },
+      {
+        "key": "experience",
+        "label": "Опыт",
+        "requirement": "Опыт от 3.0 лет; учитывать качество релевантного опыта и проекты.",
+        "status": "match",
+        "ratio": 1.0,
+        "weight": 25,
+        "confidence": 100,
+        "evidence": "Опыт указан как 5 лет (от 5 до 5), с явным упоминанием '5 лет backend-разработки' в резюме. Это превышает минимальный порог в 3 года и подтверждено конкретным описанием работы с API и PostgreSQL.",
+        "strengths": [
+          "Опыт 5 лет backend-разработки, превышает минимальный порог в 3 года"
+        ],
+        "gaps": []
+      },
+      {
+        "key": "skills",
+        "label": "Технологии",
+        "requirement": "Требуемые технологии: Python, PostgreSQL",
+        "status": "match",
+        "ratio": 1.0,
+        "weight": 35,
+        "confidence": 100,
+        "evidence": "В резюме указаны технологии: Python, PostgreSQL — полностью соответствуют требованиям. Дополнительная технология FastAPI не снижает соответствие.",
+        "strengths": [
+          "Наличие Python и PostgreSQL в навыках"
+        ],
+        "gaps": []
+      },
+      {
+        "key": "format",
+        "label": "Формат работы",
+        "requirement": "Требуемый формат: remote",
+        "status": "match",
+        "ratio": 1.0,
+        "weight": 10,
+        "confidence": 100,
+        "evidence": "В резюме указан формат работы: 'remote' — соответствует требуемому формату удалённой работы.",
+        "strengths": [
+          "Формат работы указан как remote"
+        ],
+        "gaps": []
+      },
+      {
+        "key": "salary",
+        "label": "Зарплатные ожидания",
+        "requirement": "Ожидания не выше 180000 рублей",
+        "status": "match",
+        "ratio": 1.0,
+        "weight": 5,
+        "confidence": 100,
+        "evidence": "Минимальная зарплата в резюме — 150000 рублей, что не превышает максимальный порог в 180000 рублей. Ожидания не выше допустимого уровня.",
+        "strengths": [
+          "Зарплата 150000 не превышает 180000"
+        ],
+        "gaps": []
+      }
+    ],
+    "summary": "Кандидат соответствует всем критериям: подтверждённый грейд middle, опыт более 3 лет, технологии Python и PostgreSQL, формат работы удалённый, зарплата не превышает 180000 рублей. Все требования выполнены с достаточной степенью доказательства.",
+    "provider": "Reqcore",
+    "model": "qwen3:4b-instruct-2507-q4_K_M",
+    "usage": {
+      "promptTokens": 848,
+      "completionTokens": 640
+    },
+    "evaluated_at": "2026-10-10T19:42:41.345015+00:00",
+    "decision_owner": "employer",
+    "notice": "Рекомендация Reqcore ATS. Итоговое решение принимает работодатель; статус отклика автоматически не меняется."
+  },
+  "unsuitable": {
+    "category": "unsuitable",
+    "score": 18,
+    "coverage": 100,
+    "criteria": [
+      {
+        "key": "grade",
+        "label": "Грейд",
+        "requirement": "Минимальный грейд middle. Различай подтверждённый и заявленный грейд; неизвестный грейд требует уточнения.",
+        "status": "mismatch",
+        "ratio": 0,
+        "weight": 25,
+        "confidence": 100,
+        "evidence": "Подтверждённый грейд junior ниже требуемого middle. Самовысказанный грейд 'junior', подтверждённый как 'grade_verified': true. Требуется грейд 'middle', что не соответствует заявленному. Грейд не подтверждён как 'middle', поэтому не соответствует критерию.",
+        "strengths": [],
+        "gaps": [
+          "Грейд junior не соответствует требуемому middle"
+        ]
+      },
+      {
+        "key": "experience",
+        "label": "Опыт",
+        "requirement": "Опыт от 3.0 лет; учитывать качество релевантного опыта и проекты.",
+        "status": "mismatch",
+        "ratio": 0,
+        "weight": 25,
+        "confidence": 100,
+        "evidence": "В профиле указан опыт не более 0 лет; требуется от 3.0. В резюме указано: 'Без опыта'. Опыт от 3 лет не представлен. Нет проектов или релевантного опыта в резюме.",
+        "strengths": [],
+        "gaps": [
+          "Отсутствует опыт в разработке Python API и PostgreSQL"
+        ]
+      },
+      {
+        "key": "skills",
+        "label": "Технологии",
+        "requirement": "Требуемые технологии: Python, PostgreSQL",
+        "status": "mismatch",
+        "ratio": 0.4,
+        "weight": 35,
+        "confidence": 95,
+        "evidence": "В резюме указаны навыки: HTML, CSS. Требуемые навыки — Python и PostgreSQL. Оба отсутствуют.",
+        "strengths": [],
+        "gaps": [
+          "Отсутствуют навыки Python и PostgreSQL"
+        ]
+      },
+      {
+        "key": "format",
+        "label": "Формат работы",
+        "requirement": "Требуемый формат: remote",
+        "status": "mismatch",
+        "ratio": 0.2,
+        "weight": 10,
+        "confidence": 95,
+        "evidence": "В резюме указан формат работы: 'office'. Требуется удалённая работа (remote). Не соответствует.",
+        "strengths": [],
+        "gaps": [
+          "Формат работы — офис, не соответствует требуемому удалённому"
+        ]
+      },
+      {
+        "key": "salary",
+        "label": "Зарплатные ожидания",
+        "requirement": "Ожидания не выше 180000 рублей",
+        "status": "mismatch",
+        "ratio": 0.4,
+        "weight": 5,
+        "confidence": 95,
+        "evidence": "Ожидаемая зарплата в резюме — 250000 рублей. Требуется не выше 180000 рублей. Ожидания превышают допустимый лимит.",
+        "strengths": [],
+        "gaps": [
+          "Зарплата 250000 превышает максимальный лимит 180000"
+        ]
+      }
+    ],
+    "summary": "Кандидат не соответствует требованиям по грейду, опыту, технологиям, формату работы и зарплатным ожиданиям. Все критерии не выполняются из-за отсутствия подтверждённого опыта, навыков и несоответствия условиям работы и зарплаты.",
+    "provider": "Reqcore",
+    "model": "qwen3:4b-instruct-2507-q4_K_M",
+    "usage": {
+      "promptTokens": 782,
+      "completionTokens": 626
+    },
+    "evaluated_at": "2026-10-10T19:43:26.501110+00:00",
+    "decision_owner": "employer",
+    "notice": "Рекомендация Reqcore ATS. Итоговое решение принимает работодатель; статус отклика автоматически не меняется."
+  },
+  "generated_criteria": {
+    "mode": "auto",
+    "min_grade": "middle",
+    "min_experience_years": 3.0,
+    "required_skills": [
+      "Python",
+      "PostgreSQL"
+    ],
+    "work_format": "remote",
+    "salary_max": 180000,
+    "weights": {
+      "grade": 25,
+      "experience": 25,
+      "skills": 35,
+      "format": 10,
+      "salary": 5
+    },
+    "suitable_threshold": 75,
+    "unsuitable_threshold": 35,
+    "strict_grade": true,
+    "strict_experience": true,
+    "reqcore_criteria": [
+      {
+        "key": "reqcore_0_python_api_experience",
+        "name": "Опыт разработки Python API",
+        "description": "Опыт разработки и поддержки REST или GraphQL API на языке Python, не менее 3 лет",
+        "category": "experience",
+        "maxScore": 10,
+        "weight": 30
+      },
+      {
+        "key": "reqcore_1_postgresql_expertise",
+        "name": "Навыки работы с PostgreSQL",
+        "description": "Навыки проектирования, оптимизации и разработки запросов в PostgreSQL",
+        "category": "technical",
+        "maxScore": 10,
+        "weight": 25
+      },
+      {
+        "key": "reqcore_2_testing_practices",
+        "name": "Опыт внедрения тестирования",
+        "description": "Использование автоматизированных тестов (unit, integration, end-to-end) в процессе разработки",
+        "category": "technical",
+        "maxScore": 10,
+        "weight": 20
+      },
+      {
+        "key": "reqcore_3_remote_work_experience",
+        "name": "Опыт работы в удалённой среде",
+        "description": "Практический опыт разработки в условиях удалённой работы",
+        "category": "experience",
+        "maxScore": 10,
+        "weight": 15
+      },
+      {
+        "key": "reqcore_4_code_quality_practices",
+        "name": "Практики обеспечения качества кода",
+        "description": "Знание и применение принципов читаемости, модульности и поддерживаемости кода",
+        "category": "technical",
+        "maxScore": 10,
+        "weight": 10
+      }
+    ],
+    "source": "reqcore_ai"
+  }
+}

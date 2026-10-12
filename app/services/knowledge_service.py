@@ -6,6 +6,7 @@ Retrieval = векторный поиск (косинус, HNSW) ∪ ключе�
 from __future__ import annotations
 
 import hashlib
+import json
 import logging
 import re
 from pathlib import Path
@@ -76,6 +77,8 @@ def iter_markdown(root: Path):
 async def ingest_directory(db: AsyncSession, root: Path, *, source: str = "hexlet-ru-test-assignments",
                            only_languages: set[str] | None = None, batch: int = 25) -> dict:
     """Загружает *.md из локальной копии корпуса (git clone). Документы без языков python/java/sql пропускаются."""
+    if (root / 'prepared/assignments.jsonl').is_file():
+        return await ingest_prepared(db, root)
     stats = {"created": 0, "updated": 0, "unchanged": 0, "skipped": 0}
     only = only_languages or {"python", "java", "sql"}
     n = 0
@@ -101,6 +104,43 @@ async def ingest_directory(db: AsyncSession, root: Path, *, source: str = "hexle
     return stats
 
 
+async def ingest_prepared(db: AsyncSession, root: Path) -> dict:
+    """Import only the cleaned active corpus; preserve exact supplied chunks and URLs."""
+    chunks = {}
+    with (root / 'prepared/rag_chunks.jsonl').open(encoding='utf-8') as stream:
+        for line in stream:
+            item = json.loads(line)
+            chunks.setdefault(item['assignment_id'], []).append(item)
+    stats = {'created': 0, 'updated': 0, 'unchanged': 0, 'skipped': 0}
+    with (root / 'prepared/assignments.jsonl').open(encoding='utf-8') as stream:
+        for line in stream:
+            item = json.loads(line)
+            if not item['generation']['eligible'] or not item['statement']['text'].strip():
+                stats['skipped'] += 1
+                continue
+            langs = [t['name'].lower() for t in item['technologies']]
+            track_lang = {'frontend': 'javascript', 'python': 'python', 'java': 'java', 'analytics': 'sql', 'go': 'go', 'php': 'php'}
+            langs = sorted(set(langs + [track_lang.get(item['track'], 'python')]))
+            st = await upsert_document(db, source='full_data', path=item['source']['url'], title=item['title'],
+                text=item['statement']['text'], languages=langs, grade_hint=item['seniority'],
+                topics=[item['track'], item['generation']['readiness'], *item['generation']['pattern_labels']],
+                company=item.get('company'), license_=item['source'].get('assignment_license', 'unknown'))
+            if st != 'unchanged':
+                doc = (await db.execute(select(KnowledgeDocument).where(KnowledgeDocument.source == 'full_data',
+                    KnowledgeDocument.path == item['source']['url']))).scalar_one()
+                await db.execute(delete(KnowledgeChunk).where(KnowledgeChunk.document_id == doc.id))
+                pieces = chunks.get(item['id'], [])
+                vectors = embed_texts([p['embedding_text'] for p in pieces])
+                for p, vec in zip(pieces, vectors):
+                    db.add(KnowledgeChunk(document_id=doc.id, idx=p['ordinal'], text=p['text'],
+                        languages=langs, grade_hint=item['seniority'], topics=doc.topics, embedding=vec))
+            stats[st] += 1
+            if sum(stats.values()) % 25 == 0:
+                await db.commit()
+    await db.commit()
+    return stats
+
+
 async def knowledge_stats(db: AsyncSession) -> dict:
     docs = await db.execute(select(KnowledgeDocument.source, func.count()).group_by(KnowledgeDocument.source))
     chunks = await db.execute(select(func.count()).select_from(KnowledgeChunk))
@@ -116,9 +156,13 @@ def _tsquery(text: str, max_tokens: int = 12) -> str:
 
 
 async def retrieve_context(db: AsyncSession, *, query: str, language: str, grade: str, k: int = 6,
-                           pool: int = 30) -> ContextPack:
+                           pool: int = 30, include_solutions: bool = False, source_filter: list[str] | None = None) -> ContextPack:
     """Гибридный retrieval. Если корпус пуст — возвращает пустой контекст (генерация работает без RAG-подсказок)."""
     lang_filter = KnowledgeChunk.languages.contains([language])
+    if source_filter:
+        lang_filter = lang_filter & KnowledgeChunk.document_id.in_(select(KnowledgeDocument.id).where(KnowledgeDocument.source.in_(source_filter)))
+    if not include_solutions:
+        lang_filter = lang_filter & ~KnowledgeChunk.topics.contains(['solution'])
     qvec = embed_text(query, query=True)
     vec_rows = (await db.execute(
         select(KnowledgeChunk.id).where(lang_filter).order_by(KnowledgeChunk.embedding.cosine_distance(qvec)).limit(pool)
@@ -146,7 +190,8 @@ async def retrieve_context(db: AsyncSession, *, query: str, language: str, grade
         vec = [float(x) for x in (ch.embedding if ch.embedding is not None else [])]
         label = f"{doc.source}: {doc.title}" + (f" ({doc.company})" if doc.company else "")
         base = 0.6 * (rrf_score[ch.id] / top) + 0.4 * retriever.grade_affinity(ch.grade_hint or doc.grade_hint, grade)
-        cands.append({"id": str(ch.id), "vec": vec, "base": base, "text": ch.text, "label": label})
+        cands.append({"id": str(ch.id), "vec": vec, "base": base, "text": ch.text, "label": label,
+                      "url":doc.path if doc.source in ('full_data','algorithm-briefs') else None, "readiness":'partial' if 'partial' in doc.topics else 'ready'})
     picked = retriever.mmr(cands, qvec, k=k)
     gens = [g for g in ALL_GENERATORS if g.language == language]
     return retriever.build_context(query, picked, gens)

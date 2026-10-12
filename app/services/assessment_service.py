@@ -258,7 +258,6 @@ async def submit_session(db: AsyncSession, session: AssessmentSession, answers: 
         c.confirmed_grade_id = target.id
         cat = await ensure_category(db, session.specialization_id, target.id)
         c.category_id = cat.id
-        c.onboarding_completed = True
         c.grade_last_changed_at = c.grade_confirmed_at = now
         c.grade_valid_until = now + timedelta(days=gp.VALIDITY_DAYS)
         c.last_test_ratio = ratio
@@ -270,8 +269,15 @@ async def submit_session(db: AsyncSession, session: AssessmentSession, answers: 
         await _verify_skills(db, c, lang_ratio, now, micro=session.purpose == "micro")
 
     session.status, session.submitted_at = SessionStatus.submitted, now
+    if session.purpose == 'onboarding' and not c.onboarding_completed:
+        from app.services.onboarding_service import registration_issues
+        if not await registration_issues(db, c):
+            c.onboarding_completed = True
     session.score, session.scaled_score, session.confidence = ratio, round(ratio * 100, 1), confidence
     session.result, session.passed, session.integrity = result, result == "pass", flags
+    if session.passed:
+        from app.services.reward_service import award
+        await award(db,c.user_id,'test','assessment:'+str(session.id))
     session.outcome_grade_id = outcome_grade_id
     lower = None
     if dec.next_step == "try_lower" and target.level > 0:

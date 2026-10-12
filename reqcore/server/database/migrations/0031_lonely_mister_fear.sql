@@ -1,0 +1,1 @@
+ALTER TABLE "candidate" ADD COLUMN "retention_reviewed_at" timestamp;

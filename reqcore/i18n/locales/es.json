@@ -1,0 +1,113 @@
+{
+  "common": {
+    "language": "Idioma",
+    "selectLanguage": "Seleccionar idioma",
+    "save": "Guardar",
+    "cancel": "Cancelar"
+  },
+  "home": {
+    "nav": {
+      "features": "Características",
+      "openPositions": "Posiciones abiertas",
+      "roadmap": "Hoja de ruta",
+      "blog": "Blog",
+      "github": "GitHub",
+      "dashboard": "Panel de control",
+      "logIn": "Iniciar sesión",
+      "signUp": "Registrarse"
+    },
+    "badge": "ATS de código abierto para equipos de desarrollo",
+    "hero": {
+      "titleLine1": "Tu contratación.",
+      "titleHighlight": "Tu infraestructura.",
+      "subtitle": "Seguimiento de candidatos de código abierto para equipos que alojan en sus propios servidores.",
+      "goToDashboard": "Ir al panel",
+      "signIn": "Iniciar sesión",
+      "createAccount": "Crear cuenta",
+      "ctaDemo": "Probar demo en vivo",
+      "ctaStart": "Ver en GitHub",
+      "hint": "Versión temprana de código abierto — prueba la demo con datos de ejemplo, sin registro"
+    },
+    "pillars": {
+      "yourData": {
+        "label": "Tus datos",
+        "desc": "Postgres + MinIO en tu infraestructura. Nada sale de tu red."
+      },
+      "auditable": {
+        "label": "Totalmente auditable",
+        "desc": "Código abierto — cada línea de lógica de matching es visible y personalizable."
+      },
+      "unlimitedSeats": {
+        "label": "Puestos ilimitados",
+        "desc": "Agrega a todo tu equipo de contratación. Sin precio por puesto, nunca."
+      }
+    },
+    "footer": {
+      "source": "Código fuente",
+      "tagline": "Reqcore — seguimiento de candidatos de código abierto"
+    }
+  },
+  "retention": {
+    "title": "Privacidad y retención",
+    "description": "Configura los avisos de privacidad y elimina automáticamente los datos de candidatos al finalizar el período de retención.",
+    "policy": {
+      "title": "Política de retención",
+      "description": "Se calcula desde la actividad más reciente del proceso de selección.",
+      "enable": "Activar la retención automática",
+      "enableHelp": "Los candidatos vencidos pasan a cuarentena antes del borrado definitivo. Los datos existentes reciben primero un período de revisión.",
+      "months": "Período de retención (meses)",
+      "quarantineDays": "Período de cuarentena (días)",
+      "quarantineHelp": "Período recuperable antes del borrado definitivo."
+    },
+    "privacy": {
+      "title": "Aviso de privacidad del formulario",
+      "description": "Se muestra a los candidatos en el formulario público de solicitud.",
+      "url": "URL de la política de privacidad",
+      "email": "Correo de contacto de privacidad",
+      "text": "Texto del aviso (opcional)",
+      "defaultNotice": "Al presentar tu solicitud, aceptas que {organization} procese tus datos para evaluar tu candidatura. Tus datos se conservarán solo durante el tiempo necesario y después se eliminarán.",
+      "thisOrganization": "esta organización",
+      "policyLink": "Política de privacidad",
+      "contactLabel": "Contacto"
+    },
+    "save": {
+      "button": "Guardar cambios",
+      "saving": "Guardando…",
+      "saved": "¡Guardado!",
+      "permission": "Solo administradores y propietarios pueden cambiar esta configuración."
+    },
+    "review": {
+      "title": "Próximas eliminaciones",
+      "description": "Candidatos próximos a vencer, en cuarentena o exentos.",
+      "instanceDisabled": "El administrador de la instancia ha pausado la limpieza automática. Las políticas y los datos de revisión no cambian.",
+      "loading": "Cargando…",
+      "empty": "Nada que revisar. Ningún candidato se acerca a su límite de retención.",
+      "expires": "Vence el {date}",
+      "erases": "Se elimina el {date}",
+      "exemptUntil": "Exento hasta el {date}"
+    },
+    "status": {
+      "expiring": "Próximo a vencer",
+      "expired": "Vencido",
+      "quarantined": "En cuarentena",
+      "exempt": "Exento"
+    },
+    "actions": {
+      "export": "Exportar datos",
+      "restore": "Restaurar",
+      "hold": "Añadir retención legal",
+      "clearHold": "Quitar retención legal",
+      "erase": "Eliminar ahora",
+      "holdPrompt": "Motivo de la retención legal (por ejemplo, un litigio activo):",
+      "eraseConfirm": "Esto elimina definitivamente a {name} y todos sus datos, y no se puede deshacer. Escribe el nombre completo del candidato para confirmar:"
+    },
+    "errors": {
+      "save": "No se pudo guardar la configuración",
+      "restore": "No se pudo restaurar el candidato",
+      "hold": "No se pudo añadir la retención legal",
+      "clearHold": "No se pudo quitar la retención legal",
+      "erase": "No se pudo eliminar el candidato",
+      "eraseNameMismatch": "El nombre no coincide. No se eliminó el candidato."
+    }
+  }
+}

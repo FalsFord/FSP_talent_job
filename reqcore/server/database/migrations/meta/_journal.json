@@ -1,0 +1,230 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1771063818704,
+      "tag": "0000_young_vivisector",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1771084513743,
+      "tag": "0001_redundant_blink",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1771089588253,
+      "tag": "0002_kind_inertia",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1771094430857,
+      "tag": "0003_slim_clea",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1771140508257,
+      "tag": "0004_clumsy_cable",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1771422251507,
+      "tag": "0005_yielding_the_executioner",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1772374562880,
+      "tag": "0006_breezy_hairball",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1772433529892,
+      "tag": "0007_colossal_nomad",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1772614057261,
+      "tag": "0008_nervous_stone_men",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1772615027489,
+      "tag": "0009_organic_gauntlet",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1773152393640,
+      "tag": "0010_glamorous_mattie_franklin",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1773154463252,
+      "tag": "0011_oval_enchantress",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1773222445580,
+      "tag": "0012_chief_rockslide",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1773228233884,
+      "tag": "0013_smart_blue_marvel",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1773231779768,
+      "tag": "0015_married_wallflower",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1773733547482,
+      "tag": "0015_closed_william_stryker",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1773738744180,
+      "tag": "0016_first_spyke",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1773822054166,
+      "tag": "0017_cynical_nicolaos",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1774599034718,
+      "tag": "0018_source_tracking",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1775723970045,
+      "tag": "0019_noisy_strong_guy",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1776076881696,
+      "tag": "0020_goofy_grey_gargoyle",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1776400000000,
+      "tag": "0021_candidate_demographics_org_settings",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1776450000000,
+      "tag": "0022_salary_negotiable",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1776500000000,
+      "tag": "0023_job_experience_level",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1776550000000,
+      "tag": "0024_candidate_quick_notes",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1777199840612,
+      "tag": "0025_chatbot_persistence",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1777200000000,
+      "tag": "0026_multi_ai_configs",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1777300000000,
+      "tag": "0027_chatbot_agent_default_unique",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1777463601249,
+      "tag": "0028_custom_properties",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1781773504170,
+      "tag": "0029_wakeful_secret_warriors",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1781936440705,
+      "tag": "0030_robust_quasimodo",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1781939104136,
+      "tag": "0031_lonely_mister_fear",
+      "breakpoints": true
+    }
+  ]
+}

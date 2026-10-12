@@ -318,7 +318,8 @@ class Invitations(unittest.TestCase):
         self.assertFalse(fsm.can_transition("sent", "accepted", "employer"))        # работодатель не принимает за кандидата
         self.assertFalse(fsm.can_transition("sent", "viewed", "employer"))
         self.assertTrue(fsm.can_transition("sent", "withdrawn", "employer"))
-        self.assertFalse(fsm.can_transition("accepted", "withdrawn", "employer"))
+        self.assertTrue(fsm.can_transition("accepted", "withdrawn", "employer"))
+        self.assertFalse(fsm.can_transition("accepted", "withdrawn", "candidate"))
 
     def test_salary_rules(self):
         self.assertIsNone(fsm.validate_salary(100000, 150000))
@@ -326,11 +327,6 @@ class Invitations(unittest.TestCase):
         self.assertEqual(fsm.validate_salary(200000, 100000), "SALARY_INVALID")
         self.assertEqual(fsm.validate_salary(0, 10), "SALARY_INVALID")
 
-    def test_limits(self):
-        kw = dict(per_day=20, pair_cooldown_days=30)
-        self.assertIsNone(fsm.check_invite_limits(NOW, sent_last_24h=3, last_invite_to_candidate=None, account_age_days=30, **kw))
-        self.assertEqual(fsm.check_invite_limits(NOW, sent_last_24h=5, last_invite_to_candidate=None, account_age_days=2, **kw), "INVITE_LIMIT")
-        self.assertEqual(fsm.check_invite_limits(NOW, sent_last_24h=0, last_invite_to_candidate=NOW - timedelta(days=3), account_age_days=30, **kw), "INVITE_COOLDOWN")
 
 
 class Trust(unittest.TestCase):

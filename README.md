@@ -14,22 +14,38 @@
 
 ## Быстрый старт (Docker)
 
+Эта ветка объединяет исходный FSP backend и интеграции EndPoint. Фронтенд находится в ветке
+[`endpoint-frontend`](https://github.com/FalsFord/FSP_talent_job/tree/endpoint-frontend), каталог `frontend/`.
+Исходная документация API ниже сохранена; изменения описаны в [документации EndPoint](docs/ENDPOINT.md).
+
 ```bash
-cp .env.example .env          # задать SECRET_KEY, при желании — SMTP и LLM
-# опционально: корпус знаний для RAG
-git clone https://github.com/Hexlet/ru-test-assignments data/ru-test-assignments
-docker compose up --build
+cp .env.example .env
+# Задайте независимые случайные SECRET_KEY, POSTGRES_PASSWORD, ATS_SERVICE_TOKEN,
+# REQCORE_DB_PASSWORD, REQCORE_STORAGE_PASSWORD, REQCORE_AUTH_SECRET,
+# GITEVAL_API_KEY и GITEVAL_WEBHOOK_SECRET. Например: openssl rand -hex 32
+# Для генерации/ATS заполните GigaChat credentials. Секреты не коммитить.
+docker compose up -d --build
 ```
 
-Entrypoint контейнера сам: дождётся БД → накатит миграции → засидирует справочники → загрузит корпус знаний → запустит uvicorn.
+Compose запускает FastAPI, PostgreSQL/pgvector, Redis, Git evaluator, ATS и Reqcore.
+Ollama отключена по умолчанию (профиль `local-llm`). Reqcore обращается к GigaChat через
+защищённый внутренний адаптер FastAPI. Реальный ответ GigaChat для ATS пока не подтверждён;
+ошибки провайдера не должны интерпретироваться как несоответствие кандидата.
 
-API будет доступен на `http://localhost:8000`:
+Judge0 запускается отдельно. Его адрес настраивается через `JUDGE0_URL` в Compose;
+`host.docker.internal:2358` — настройка Docker Desktop, для Linux укажите адрес изолированного Judge0.
+Подключаемый каталог `data/full_data` пуст: частные данные и внешний корпус не публикуются.
+Встроенный банк вопросов доступен без него.
 
-| URL | Что это |
+| URL | Назначение |
 |---|---|
-| `/docs` | Swagger UI (интерактивная документация) |
-| `/openapi.json` | OpenAPI-схема |
-| `/health` | Проверка живости (`status`, `code_exec_enabled`) |
+| `http://localhost:8000/health` | Проверка сервиса |
+| `http://localhost:8000/docs` | Нативный Swagger |
+| `http://localhost:8000/api/docs` | Документация UI-адаптера |
+
+Для переноса существующих данных отдельно нужны дамп PostgreSQL и файлы загрузок.
+Git содержит только исходный код. Перед публичным запуском отключите демо-биллинг и
+ограничьте доступ к демо-аккаунтам. См. [развёртывание](docs/DEPLOYMENT.md).
 
 ### Локальный запуск без Docker
 
